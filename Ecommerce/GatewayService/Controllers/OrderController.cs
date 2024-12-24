@@ -23,9 +23,9 @@ namespace GatewayService.Controllers
             OperationStatusResponse response = await _orderServiceClient.CreateOrderAsync(request, cancellationToken: cancellationToken);
 
             if (response.Status == OrderServiceGRPC.Status.Success)
-                return BadRequest(response.Message);
-            else
                 return Ok(response.Message);
+            else
+                return BadRequest(response.Message);
         }
 
         [HttpGet("orders")]
