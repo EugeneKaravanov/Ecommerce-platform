@@ -1,71 +1,34 @@
-﻿using Ecommerce;
+﻿using ProductServiceGRPC;
 using ProductService.Models;
 
 namespace ProductService.Utilities
 {
     internal class Mapper
     {
-        internal static ProductGRPC TransferProductToProductGrpc(Product product)
+        internal static ProductGRPC TransferProductAndIdToProductGRPC(int id, Product product)
         {
             ProductGRPC productGrpc = new ProductGRPC();
 
+            productGrpc.Id = id;
             productGrpc.Name = product.Name;
             productGrpc.Description = product.Description;
-            productGrpc.Price = Converter.ConvertDecimalToMoney(product.Price);
+            productGrpc.Price = MoneyConverter.ConvertDecimalToMoney(product.Price);
             productGrpc.Stock = product.Stock;
 
             return productGrpc;
         }
 
-        internal static Product TransferProductGRPCToProduct(ProductGRPC productGrpc)
+        internal static Product TransferProductGRPCToProductAndId(ProductGRPC productGrpc, out int id)
         {
             Product product = new Product();
 
+            id = productGrpc.Id;
             product.Name = productGrpc.Name;
             product.Description = productGrpc.Description;
-            product.Price = Converter.ConvertMoneyToDecimal(productGrpc.Price);
+            product.Price = MoneyConverter.ConvertMoneyToDecimal(productGrpc.Price);
             product.Stock = productGrpc.Stock;
 
             return product;
-        }
-
-        internal static ProductWithIdGRPC TransferProductAndIdToProductWithIdGRPC(int id, Product product)
-        {
-            ProductWithIdGRPC productWithIdGrpc = new ProductWithIdGRPC();
-
-            productWithIdGrpc.Id = id;
-            productWithIdGrpc.Name = product.Name;
-            productWithIdGrpc.Description = product.Description;
-            productWithIdGrpc.Price = Converter.ConvertDecimalToMoney(product.Price);
-            productWithIdGrpc.Stock = product.Stock;
-
-            return productWithIdGrpc;
-        }
-
-        internal static Product TransferProductWithIdGRPCToProductAndId(ProductWithIdGRPC productWithIdGRPC, out int id)
-        {
-            Product product = new Product();
-
-            id = productWithIdGRPC.Id;
-            product.Name = productWithIdGRPC.Name;
-            product.Description = productWithIdGRPC.Description;
-            product.Price = Converter.ConvertMoneyToDecimal(productWithIdGRPC.Price);
-            product.Stock = productWithIdGRPC.Stock;
-
-            return product;
-        }
-
-        internal static ProductWithIdGRPC TransferProductWithIdToProductAndIdGRPC(ProductWithId productWithId)
-        {
-            ProductWithIdGRPC productWithIdGRPC = new ProductWithIdGRPC();
-
-            productWithIdGRPC.Id = productWithId.Id;
-            productWithIdGRPC.Name = productWithId.Name;
-            productWithIdGRPC.Description = productWithId.Description;
-            productWithIdGRPC.Price = Converter.ConvertDecimalToMoney(productWithId.Price);
-            productWithId.Stock = productWithId.Stock;
-
-            return productWithIdGRPC;
         }
 
         internal static ProductWithId TansferProductAndIdToProductWithId(int id, Product product)
@@ -81,6 +44,19 @@ namespace ProductService.Utilities
             return productWithId;
         }
 
+        internal static ProductGRPC TransferProductWithIdToProductGrpc(ProductWithId productWithId)
+        {
+            ProductGRPC productGrpc = new ProductGRPC();
+
+            productGrpc.Id = productWithId.Id;
+            productGrpc.Name = productWithId.Name;
+            productGrpc.Description = productWithId.Description;
+            productGrpc.Price = MoneyConverter.ConvertDecimalToMoney(productWithId.Price);
+            productGrpc.Stock = productWithId.Stock;
+
+            return productGrpc;
+        }
+
         internal static PageGRPC TrasferPageToPageGRPC(Page<ProductWithId> page)
         {
             PageGRPC pageGRPC = new PageGRPC();
@@ -91,23 +67,64 @@ namespace ProductService.Utilities
             pageGRPC.ElementsOnPageCount = page.ElementOnPageCount;
 
             foreach (ProductWithId product in page.Products)
-                pageGRPC.Products.Add(TransferProductWithIdToProductAndIdGRPC(product));
+                pageGRPC.Products.Add(TransferProductWithIdToProductGrpc(product));
 
             return pageGRPC;
         }
 
-        internal static Ecommerce.Status TransferResultStatusToResponseStatus(Models.Status status)
+        internal static InputOrderProduct TransferInputTakeProductsGRPCToIncomingOrderProduct(InputTakeProductGRPC inputTakeProductsGRPC)
+        {
+            InputOrderProduct inputOrderProduct = new();
+
+            inputOrderProduct.ProductId = inputTakeProductsGRPC.Id;
+            inputOrderProduct.Quantity = inputTakeProductsGRPC.Quantity;
+
+            return inputOrderProduct;
+        }
+
+        internal static List<InputOrderProduct> TransferTakeProductsRequestToIncomingOrderProductList(TakeProductsRequest request)
+        {
+            List<InputOrderProduct> inputOrderProducts = new();
+
+            foreach (InputTakeProductGRPC product in request.ProductOrders)
+                inputOrderProducts.Add(TransferInputTakeProductsGRPCToIncomingOrderProduct(product));
+
+            return inputOrderProducts;
+        }
+
+        internal static TakeProductsResponse.Types.ProductsReceived TransferListOutputOrderProductToProductsrReceived(List<OutputOrderProduct> orderProducts)
+        {
+            TakeProductsResponse.Types.ProductsReceived productsReceived = new();
+
+            foreach (OutputOrderProduct orderProduct in orderProducts)
+                productsReceived.ProductOrders.Add(TansferOutputOrderProductToOutputTakeProductGRPC(orderProduct));
+
+            return productsReceived;
+        }
+
+        internal static OutputTakeProductGRPC TansferOutputOrderProductToOutputTakeProductGRPC(OutputOrderProduct orderProduct)
+        {
+            OutputTakeProductGRPC outputTakeProductGRPC = new();
+
+            outputTakeProductGRPC.Id = orderProduct.ProductId;
+            outputTakeProductGRPC.Quantity = orderProduct.Quantity;
+            outputTakeProductGRPC.UnitPrice = MoneyConverter.ConvertDecimalToMoney(orderProduct.UnitPrice);
+
+            return outputTakeProductGRPC;
+        }
+
+        internal static ProductServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)
         {
             switch (status)
             {
                 case Models.Status.Success:
-                    return Ecommerce.Status.Success;
+                    return ProductServiceGRPC.Status.Success;
 
                 case Models.Status.NotFound:
-                    return Ecommerce.Status.NotFound;
+                    return ProductServiceGRPC.Status.NotFound;
 
                 default:
-                    return Ecommerce.Status.Failure;
+                    return ProductServiceGRPC.Status.Failure;
             }
         }
     }

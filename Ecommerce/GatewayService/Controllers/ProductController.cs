@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Ecommerce;
+using ProductServiceGRPC;
 using GatewayService.Models;
 using GatewayService.Utilities;
 using ProductService.Models;
@@ -8,9 +8,9 @@ namespace GatewayService.Controllers
 {
     public class ProductController : Controller
     {
-        private readonly Ecommerce.ProductService.ProductServiceClient _productServiceClient;
+        private readonly ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient _productServiceClient;
 
-        public ProductController(Ecommerce.ProductService.ProductServiceClient productServiceClient) 
+        public ProductController(ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient) 
         {
             _productServiceClient = productServiceClient;
         }
@@ -37,7 +37,7 @@ namespace GatewayService.Controllers
 
             if (response.ResultCase == GetProductResponse.ResultOneofCase.Found)
             {
-                ProductDto result = Mapper.TransferProductGRPCToProductDto(response.Found.Product);
+                ProductWithIdDto result = Mapper.TransferProductGRPCToProdutctWithIdDto(response.Found.Product);
 
                 return Ok(result);
             }
@@ -61,7 +61,7 @@ namespace GatewayService.Controllers
 
             string message = response.Message;
 
-            if (response.Status == Ecommerce.Status.Success)
+            if (response.Status == ProductServiceGRPC.Status.Success)
                 return Ok(message);
             else
                 return BadRequest(message);
@@ -73,7 +73,7 @@ namespace GatewayService.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto productDto, CancellationToken cancellationToken)
         {
-            ProductWithIdGRPC productWithIdGRPC = Mapper.TransferProductDtoAndIdToProductWithIdGRPC(id, productDto);
+            ProductGRPC productWithIdGRPC = Mapper.TransferProductDtoAndIdToProductGRPC(id, productDto);
 
             UpdateProductRequest request = new UpdateProductRequest { Product = productWithIdGRPC };
             OperationStatusResponse response = await _productServiceClient.UpdateProductAsync(request, cancellationToken: cancellationToken);
@@ -82,10 +82,10 @@ namespace GatewayService.Controllers
 
             switch (response.Status)
             {
-                case Ecommerce.Status.Success:
+                case ProductServiceGRPC.Status.Success:
                     return Ok(message);
 
-                case Ecommerce.Status.NotFound:
+                case ProductServiceGRPC.Status.NotFound:
                     return NotFound(message);
 
                 default:
@@ -103,7 +103,7 @@ namespace GatewayService.Controllers
 
             string message = response.Message;
 
-            if (response.Status == Ecommerce.Status.Success)
+            if (response.Status == ProductServiceGRPC.Status.Success)
             {
                 return Ok(message);
             }

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GatewayService", "GatewaySe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProductService", "ProductService\ProductService.csproj", "{C8946E91-F924-41A1-BAAA-6B1AED2CDEDF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService", "OrderService\OrderService.csproj", "{43F7FFAC-4907-4DE6-8BAD-081AB7359026}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C8946E91-F924-41A1-BAAA-6B1AED2CDEDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8946E91-F924-41A1-BAAA-6B1AED2CDEDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8946E91-F924-41A1-BAAA-6B1AED2CDEDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43F7FFAC-4907-4DE6-8BAD-081AB7359026}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43F7FFAC-4907-4DE6-8BAD-081AB7359026}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43F7FFAC-4907-4DE6-8BAD-081AB7359026}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43F7FFAC-4907-4DE6-8BAD-081AB7359026}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

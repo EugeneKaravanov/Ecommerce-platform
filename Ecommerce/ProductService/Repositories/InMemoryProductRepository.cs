@@ -1,4 +1,4 @@
-﻿using Ecommerce;
+﻿using ProductServiceGRPC;
 using ProductService.Models;
 using ProductService.Utilities;
 using System.Collections.Concurrent;
@@ -45,17 +45,17 @@ namespace ProductService.Repositories
             return Task.FromResult(page);
         }
 
-        public Task<ResultWithValue<Product>> GetProduct(int id, CancellationToken cancellationToken = default)
+        public Task<ResultWithValue<ProductWithId>> GetProductAsync(int id, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
-                return Task.FromCanceled<ResultWithValue<Product>>(cancellationToken);
+                return Task.FromCanceled<ResultWithValue<ProductWithId>>(cancellationToken);
 
-            ResultWithValue<Product> result = new ResultWithValue<Product>();
+            ResultWithValue<ProductWithId> result = new ResultWithValue<ProductWithId>();
 
             if (_products.TryGetValue(id, out Product product))
             {
                 result.Status = Models.Status.Success;
-                result.Value = product;
+                result.Value = Mapper.TansferProductAndIdToProductWithId(id, product);
 
                 return Task.FromResult(result);
             }
@@ -68,7 +68,7 @@ namespace ProductService.Repositories
             }
         }
 
-        public Task<Result> CreateProduct(Product product, CancellationToken cancellationToken = default)
+        public Task<Result> CreateProductAsync(Product product, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<Result>(cancellationToken);
@@ -93,7 +93,7 @@ namespace ProductService.Repositories
             }
         }
 
-        public Task<Result> UpdateProduct(int id, Product product, CancellationToken cancellationToken = default)
+        public Task<Result> UpdateProductAsync(int id, Product product, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<Result>(cancellationToken);
@@ -142,7 +142,7 @@ namespace ProductService.Repositories
             }
         }
 
-        public Task<Result> DeleteProduct(int id, CancellationToken cancellationToken = default)
+        public Task<Result> DeleteProductAsync(int id, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<Result>(cancellationToken);
@@ -164,6 +164,11 @@ namespace ProductService.Repositories
 
                 return Task.FromResult(result);
             }
+        }
+
+        public Task<ResultWithValue<List<OutputOrderProduct>>> TakeProducts(TakeProductsRequest request, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
 
         private int GetFiltredProductsCount(string? nameFilter, uint? minPriceFilter, uint? maxPriceFilter)

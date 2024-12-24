@@ -1,8 +1,8 @@
 ﻿using Google.Type;
 
-namespace GatewayService.Utilities
+namespace ProductService.Utilities
 {
-    internal class Converter
+    internal class MoneyConverter
     {
         const int NanoСoefficient = 1000000000;
 

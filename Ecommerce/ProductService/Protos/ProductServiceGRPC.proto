@@ -1,0 +1,139 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "ProductServiceGRPC";
+
+import "google/type/money.proto";
+import "google/protobuf/wrappers.proto";
+
+service ProductServiceGRPC 
+{
+  rpc GetProduct (GetProductRequest) returns (GetProductResponse);
+  rpc GetProducts (GetProductsRequest) returns (GetProductsResponse);
+  rpc CreateProduct (CreateProductRequest) returns (OperationStatusResponse);
+  rpc UpdateProduct (UpdateProductRequest) returns (OperationStatusResponse);
+  rpc DeleteProduct (DeleteProductRequest) returns (OperationStatusResponse);
+  rpc TakeProducts (TakeProductsRequest) returns (TakeProductsResponse);
+}
+
+message GetProductRequest 
+{
+  int32 id = 1;
+}
+
+message GetProductsRequest
+{
+    int32 elements_on_page_count = 1;
+    int32 choosen_page_number = 2;
+    google.protobuf.StringValue name_filter = 3;
+    google.protobuf.UInt32Value min_price_filter = 4;
+    google.protobuf.UInt32Value max_price_filter = 5;
+    google.protobuf.StringValue sort_argument = 6;
+    bool is_reverse_sort = 7;
+}
+
+message CreateProductRequest 
+{
+  ProductGRPC product = 1;
+}
+
+message UpdateProductRequest 
+{
+  ProductGRPC product = 1;
+}
+
+message DeleteProductRequest 
+{
+  int32 id = 1;
+}
+
+message TakeProductsRequest
+{
+    repeated InputTakeProductGRPC product_orders = 1;
+}
+
+message GetProductResponse 
+{
+  oneof result 
+  {
+    ProductFound found = 1;
+    ProductNotFound not_found = 2;
+  }
+
+  message ProductFound 
+  {
+    ProductGRPC product = 1;
+  }
+
+  message ProductNotFound 
+  {
+    string message = 1;
+  }
+}
+
+message GetProductsResponse
+{
+    PageGRPC page = 1;
+}
+
+message TakeProductsResponse
+{
+  oneof result 
+  {
+      ProductsReceived received = 1;
+      ProductsNotReceived not_received = 2;
+  }
+
+  message ProductsReceived
+  {
+      repeated OutputTakeProductGRPC product_orders = 1;
+  }
+
+  message ProductsNotReceived
+  {
+      string message = 1;
+  }
+}
+
+message OperationStatusResponse 
+{
+  Status status = 1;
+  string message = 2;
+}
+
+message ProductGRPC 
+{
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  google.type.Money price = 4;
+  int32 stock = 5;
+}
+
+message PageGRPC
+{
+    int32 total_elements_count = 1;
+    int32 total_pages_count = 2;
+    int32 choosen_page_number = 3;
+    int32 elements_on_page_count = 4;
+    repeated ProductGRPC products = 5;
+}
+
+message InputTakeProductGRPC
+{
+    int32 id = 1;
+    int32 quantity = 2;
+}
+
+message OutputTakeProductGRPC
+{
+    int32 id = 1;
+    int32 quantity = 2;
+    google.type.Money unit_price = 3;
+}
+
+enum Status 
+{
+    SUCCESS = 0;
+    FAILURE = 1;
+    NOT_FOUND = 2;
+}

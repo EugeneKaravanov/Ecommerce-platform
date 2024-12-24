@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.Metrics;
-
-namespace ProductService.Models
+﻿namespace ProductService.Models
 {
     public class Product
     {

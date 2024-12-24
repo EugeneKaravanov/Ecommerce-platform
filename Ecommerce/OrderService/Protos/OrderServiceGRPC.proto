@@ -1,0 +1,115 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "OrderServiceGRPC";
+
+import "google/type/money.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+service OrderServiceGRPC 
+{
+  rpc CreateOrder (CreateOrderRequest) returns (OperationStatusResponse);
+  rpc GetOrders (google.protobuf.Empty) returns (GetOrdersResponse);
+  rpc GetOrder (GetOrderRequest) returns (GetOrderResponse);
+  rpc GerOrdersByCustomer (GetOrderByCustomerRequest) returns (GetOrdersByCustomerResponse);
+}
+
+message CreateOrderRequest
+{
+	InputOrderGRPC order = 1;
+}
+
+message GetOrderRequest
+{
+	int32 id = 1;
+}
+
+message GetOrderByCustomerRequest
+{
+	int32 customer_id = 1;
+}
+
+message GetOrderResponse 
+{
+  oneof result 
+  {
+    OrderFound found = 1;
+    OrderNotFound not_found = 2;
+  }
+
+  message OrderFound 
+  {
+    OutputOrderGRPC order = 1;
+  }
+
+  message OrderNotFound 
+  {
+    string message = 1;
+  }
+}
+
+message GetOrdersResponse
+{
+	repeated OutputOrderGRPC orders = 1;
+}
+
+message GetOrdersByCustomerResponse 
+{
+  oneof result 
+  {
+    OrdersFound found = 1;
+    OrdersNotFound not_found = 2;
+  }
+
+  message OrdersFound 
+  {
+    repeated OutputOrderGRPC orders = 1;
+  }
+
+  message OrdersNotFound 
+  {
+    string message = 1;
+  }
+}
+
+message OperationStatusResponse 
+{
+  Status status = 1;
+  string message = 2;
+}
+
+message InputOrderGRPC
+{
+	int32 customer_id = 1;
+	repeated InputOrderItemGRPC items = 2;
+}
+
+message InputOrderItemGRPC
+{
+	int32 product_id = 1;
+	int32 quantity = 2;
+}
+
+message OutputOrderGRPC
+{
+	int32 id = 1;
+	int32 customer_id = 2;
+	google.protobuf.Timestamp date_time = 3;
+	google.type.Money total_amount = 4;
+	repeated OutputOrderItemGRPC items = 5;
+}
+
+message OutputOrderItemGRPC
+{
+	int32 product_id = 1;
+	int32 quantity = 2;
+	google.type.Money unit_price = 3;
+}
+
+enum Status 
+{
+    SUCCESS = 0;
+    FAILURE = 1;
+    NOT_FOUND = 2;
+}

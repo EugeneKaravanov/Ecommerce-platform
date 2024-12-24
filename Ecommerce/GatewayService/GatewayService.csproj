@@ -6,16 +6,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.27.3" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.65.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.65.0">
+	  <PackageReference Include="Google.Protobuf" Version="3.27.2" />
+	  <PackageReference Include="Grpc.AspNetCore" Version="2.65.0" />
+	  <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.65.0" />
+	  <PackageReference Include="Grpc.Tools" Version="2.65.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.1.0" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ProductService\ProductService.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<Protobuf Include="Protos\ProductServiceGRPC.proto" GrpcServices="Client" AdditionalImportDirs="Protos\googleapis" />
+		<Protobuf Include="Protos\OrderServiceGRPC.proto" GrpcServices="Client" AdditionalImportDirs="Protos\googleapis" />
+		<Protobuf Include="Protos\googleapis\google\type\money.proto" />
+	</ItemGroup>
 
 </Project>

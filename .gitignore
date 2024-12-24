@@ -394,5 +394,13 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# PostgreSQL
+*.sql
+*.pgsql
+*.dump
+*.backup
+
 # JetBrains Rider
 *.sln.iml
+
+Ecommerce/Data/
