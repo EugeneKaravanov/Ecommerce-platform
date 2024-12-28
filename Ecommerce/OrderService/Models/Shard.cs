@@ -2,14 +2,15 @@
 {
     public class Shard
     {
-        public int BucketsCount => bucketsIds.Count;
+        public int BucketsCount => BucketsIds.Count;
 
-        public Shard(string connectionString)
+        public Shard(string connectionString, List<int> bucketsIds)
         {
             ConnectionString = connectionString;
+            BucketsIds = bucketsIds;
         }
 
         public string ConnectionString { get; private set; }
-        public List<int> bucketsIds { get; set; }
+        public List<int> BucketsIds { get; set; }
     }
 }

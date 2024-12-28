@@ -1,16 +1,16 @@
 ﻿using Npgsql;
 using OrderService.Models;
 
-namespace OrderService.Utilities
+namespace OrderService.Utilities.Factories
 {
     public class ShardConnectionFactory
     {
-        private List<Shard> _shards;
         private int _bucketsCount;
+        private readonly ShardFactory _shardFactory;
 
-        public ShardConnectionFactory(List<Shard> shards)
+        public ShardConnectionFactory(ShardFactory shardFactory)
         {
-            _shards = shards;
+            _shardFactory = shardFactory;
             _bucketsCount = GetBucketsCount();
         }
 
@@ -20,7 +20,7 @@ namespace OrderService.Utilities
             string connectionString = GetShardByBucketId(bucketId).ConnectionString;
 
             bucketName = "bucket-" + bucketId;
-            
+
             return new NpgsqlConnection(connectionString);
         }
 
@@ -31,21 +31,23 @@ namespace OrderService.Utilities
 
         private int GetBucketsCount()
         {
+            List<Shard> shards = _shardFactory.GetAllShards();
             int count = 0;
 
-            foreach (Shard shard in _shards)
+            foreach (Shard shard in shards)
                 count += shard.BucketsCount;
 
-            return count;     
+            return count;
         }
 
         private Shard GetShardByBucketId(int bucketId)
         {
+            List<Shard> shards = _shardFactory.GetAllShards();
             Shard outputShard = null;
 
-            foreach (Shard shard in _shards)
+            foreach (Shard shard in shards)
             {
-                if (shard.bucketsIds.Contains(bucketId))
+                if (shard.BucketsIds.Contains(bucketId))
                 {
                     outputShard = shard;
                     return outputShard;
