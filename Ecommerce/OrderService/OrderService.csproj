@@ -26,4 +26,11 @@
 	  <Protobuf Include="Protos\googleapis\google\type\money.proto" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\OrderService.Models\OrderService.Models.csproj" />
+    <ProjectReference Include="..\OrderSevice.FirstShardDB.Migrations\OrderSevice.FirstShardDB.Migrations.csproj" />
+    <ProjectReference Include="..\OrderSevice.NoShardDB.Migrations\OrderSevice.NoShardDB.Migrations.csproj" />
+    <ProjectReference Include="..\OrderSevice.SecondShardDB.Migrations\OrderSevice.SecondShardDB.Migrations.csproj" />
+  </ItemGroup>
+
 </Project>

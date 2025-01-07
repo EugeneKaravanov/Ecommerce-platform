@@ -2,16 +2,20 @@
 using Npgsql;
 using OrderService.Models;
 using OrderService.Services;
+using OrderService.Utilities.Factories;
 using ProductServiceGRPC;
 
 namespace OrderService.Repositories
 {
     public class ShardOrderRepository : IOrderRepository
     {
+        private readonly ShardConnectionFactory _shardConnectionFactory;
+        private readonly ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient _productServiceClient;
 
-        public ShardOrderRepository()
+        public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient)
         {
-
+            _shardConnectionFactory = shardConnectionFactory;
+            _productServiceClient = productServiceClient;
         }
 
         public async Task<Result> CreateOrderAsync(InputOrder order, CancellationToken cancellationToken = default)

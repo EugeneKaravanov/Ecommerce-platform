@@ -1,20 +1,17 @@
 ﻿using FluentMigrator;
 
-namespace OrderService.Migrations
+namespace OrderService.Migrations.NoShardDB
 {
     [Migration(0, "Initial Migration For Orders")]
-    public class InitialMigrationForOrderItems : Migration
+    public class NoShardMigration : Migration
     {
         public override void Up()
         {
             Execute.Sql(@"CREATE TABLE Orders (Id SERIAL PRIMARY KEY, CustomerId INT, OrderDate TIMESTAMP, TotalAmount DECIMAL);");
             Execute.Sql(@"CREATE INDEX index_customer_id ON Orders (CustomerId);");
+            Execute.Sql(@"CREATE TABLE OrderItems (Id SERIAL PRIMARY KEY, OrderId INT REFERENCES orders(id), ProductId INT, Quantity INT, UnitPrice DECIMAL);");
         }
 
-        public override void Down()
-        {
-            Execute.Sql("DROP INDEX index_customer_id;");
-            Execute.Sql("DROP TABLE Orders;");
-        }
+        public override void Down() { }
     }
 }

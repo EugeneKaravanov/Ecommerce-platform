@@ -8,8 +8,8 @@ namespace OrderService.Utilities.Factories
 
         public ShardFactory(List<string> connectionStrings) 
         {
-            _shards.Add(new Shard(connectionStrings[1], new List<int> { 0, 1, 2, 3}));
-            _shards.Add(new Shard(connectionStrings[2], new List<int> { 4, 5, 6, 7 }));
+            _shards.Add(new Shard(connectionStrings[0], new List<int> { 0, 1, 2, 3}));
+            _shards.Add(new Shard(connectionStrings[1], new List<int> { 4, 5, 6, 7 }));
         }
 
         public List<Shard> GetAllShards()
@@ -24,7 +24,7 @@ namespace OrderService.Utilities.Factories
 
         public Shard GetShardById(int shardId)
         {
-            return _shards[shardId];
+            return _shards[shardId - 1];
         }
     }
 }

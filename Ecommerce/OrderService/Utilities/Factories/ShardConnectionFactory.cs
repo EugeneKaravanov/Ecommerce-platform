@@ -5,14 +5,15 @@ namespace OrderService.Utilities.Factories
 {
     public class ShardConnectionFactory
     {
-        private int _bucketsCount;
         private readonly ShardFactory _shardFactory;
 
         public ShardConnectionFactory(ShardFactory shardFactory)
         {
             _shardFactory = shardFactory;
-            _bucketsCount = GetBucketsCount();
+            BucketsCount = GetBucketsCount();
         }
+
+        public int BucketsCount { get; set; }
 
         public NpgsqlConnection GetConnectionByOrderId(int orderId, out string bucketName)
         {
@@ -26,7 +27,7 @@ namespace OrderService.Utilities.Factories
 
         private int GetBucketNumberByOrderId(int orderId)
         {
-            return orderId % _bucketsCount;
+            return orderId % BucketsCount;
         }
 
         private int GetBucketsCount()

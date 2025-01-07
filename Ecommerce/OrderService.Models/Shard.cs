@@ -12,5 +12,10 @@
 
         public string ConnectionString { get; private set; }
         public List<int> BucketsIds { get; set; }
+
+        public int GetBucketId(int number)
+        {
+            return BucketsIds[number];
+        }
     }
 }
