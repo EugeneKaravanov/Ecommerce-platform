@@ -29,6 +29,16 @@ namespace OrderService.Utilities.Factories
             return new NpgsqlConnection(GetShardByBucketId(bucketId).ConnectionString);
         }
 
+        public List<int> GetBucketsByOrderIds(List<int> orderIds)
+        {
+            List<int> buckets = new();
+
+            foreach (int orderId in orderIds)
+                buckets.Add(GetBucketNumberByOrderId(orderId));
+
+            return buckets.Distinct().ToList();
+        }
+
         private int GetBucketNumberByOrderId(int orderId)
         {
             return orderId % BucketsCount;

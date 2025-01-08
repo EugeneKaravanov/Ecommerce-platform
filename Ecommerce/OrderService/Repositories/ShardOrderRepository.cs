@@ -4,7 +4,6 @@ using OrderService.Models;
 using OrderService.Services;
 using OrderService.Utilities.Factories;
 using ProductServiceGRPC;
-using System.Threading.RateLimiting;
 
 namespace OrderService.Repositories
 {
@@ -83,6 +82,16 @@ namespace OrderService.Repositories
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice
                 });
+            string sqlStringToInsertInCustomerIdGlobalIndex = @$"INSERT INTO Bucket{_customerIdGlobalIndexBucket}.CustomerIdGlobalIndex (Id, CustomerId)
+                                                                VALUES (@Id, @OCustomerId)";
+
+            await using var customerIdGlobalIndexConnection = _shardConnectionFactory.GetConnectionByBucketId(_customerIdGlobalIndexBucket);
+            await customerIdGlobalIndexConnection.OpenAsync(cancellationToken);
+            await bucketConnection.ExecuteAsync(sqlStringToInsertInCustomerIdGlobalIndex, new
+            {
+                Id = id,
+                CustomerId = order.CustomerId,
+            });
 
             result.Status = Models.Status.Success;
             result.Message = "Заказ успешно сформирован!";
@@ -148,7 +157,53 @@ namespace OrderService.Repositories
 
         public async Task<ResultWithValue<List<OutputOrder>>> GetOrdersByCustomerAsync(int customerId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            ResultWithValue<List<OutputOrder>> result = new();
+            result.Value = new();
+            List<OutputOrder> outputOrders = new();
+            string sqlStringToGetOrderIdsBuCustomer = @$"SELECT Id FROM Bucket{_customerIdGlobalIndexBucket}.CustomerIdGlobalIndex
+                                                        WHERE customerid = @CustomerId";
+
+            await using var customerIdGlobalIndexConnection = _shardConnectionFactory.GetConnectionByBucketId(_customerIdGlobalIndexBucket);
+            await customerIdGlobalIndexConnection.OpenAsync(cancellationToken);
+
+            var tempOrderIds = await customerIdGlobalIndexConnection.QueryAsync<int>(sqlStringToGetOrderIdsBuCustomer, new { CustomerId = customerId });
+            List<int> orderIds = tempOrderIds.ToList();
+            List<int> bucketIds = _shardConnectionFactory.GetBucketsByOrderIds(orderIds);
+
+            for (int i = 0; i < bucketIds.Count; i++)
+            {
+                int bucketId = bucketIds[i];
+                string sqlStringForGetOrdersByCustomerId = $"SELECT * FROM Bucket{bucketId}.Orders WHERE customerid = @CustomerId";
+                string sqlStringForGetOrderItemsById = $"SELECT * FROM Bucket{bucketId}.OrderItems WHERE orderid = @OrderId";
+
+                await using var connection = _shardConnectionFactory.GetConnectionByBucketId(bucketId);
+                await connection.OpenAsync(cancellationToken);
+
+                var tempOrders = await connection.QueryAsync<OutputOrder>(sqlStringForGetOrdersByCustomerId, new { CustomerId = customerId });
+                List<OutputOrder> orders = tempOrders.ToList();
+                
+                foreach (var order in orders)
+                    outputOrders.Add(order);
+
+                foreach (OutputOrder order in outputOrders)
+                {
+                    var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsById, new { OrderId = order.Id });
+                    order.OrderItems = tempOrderItems.ToList();
+                }
+            }
+
+            if (outputOrders.Count == 0)
+            {
+                result.Status = Models.Status.Failure;
+                result.Message = $"Заказы пользователя {customerId} не найдены!";
+
+                return result;
+            }
+
+            result.Status = Models.Status.Success;
+            result.Value = outputOrders;
+
+            return result;
         }
     }
 }
