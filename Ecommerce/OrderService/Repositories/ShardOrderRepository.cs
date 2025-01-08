@@ -93,11 +93,12 @@ namespace OrderService.Repositories
         public async Task<List<OutputOrder>> GetOrdersAsync(CancellationToken cancellationToken = default)
         {
             List<OutputOrder> outputOrders = new();
-            string sqlStringForGetAllOrders = "SELECT * FROM Orders";
-            string sqlStringForGetOrderItemsByOrderId = "SELECT * FROM OrderItems WHERE orderid = @OrderId";
 
             for(int i = 0; i < _shardConnectionFactory.BucketsCount; i++)
             {
+                string sqlStringForGetAllOrders = $"SELECT * FROM Bucket{i}.Orders";
+                string sqlStringForGetOrderItemsByOrderId = $"SELECT * FROM Bucket{i}.OrderItems WHERE orderid = @OrderId";
+
                 await using var connection = _shardConnectionFactory.GetConnectionByBucketId(_idCounterBucketId);
                 await connection.OpenAsync(cancellationToken);
 
@@ -117,7 +118,32 @@ namespace OrderService.Repositories
 
         public async Task<ResultWithValue<OutputOrder>> GetOrderAsync(int id, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            ResultWithValue<OutputOrder> result = new();
+            int bucketId;
+
+            await using var connection = _shardConnectionFactory.GetConnectionByOrderId(id, out bucketId);
+
+            string sqlStringForGetOrderById = $"SELECT * FROM Bucket{bucketId}.Orders WHERE id = @Id LIMIT 1";
+            string sqlStringForGetOrderItemsByOrderId = $"SELECT * FROM Bucket{bucketId}.OrderItems WHERE orderid = @OrderId";
+
+            await connection.OpenAsync(cancellationToken);
+
+            OutputOrder? order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
+
+            if (order == null)
+            {
+                result.Status = Models.Status.Failure;
+                result.Message = $"Заказ с ID {id} отсутствует!";
+
+                return result;
+            }
+
+            var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsByOrderId, new { OrderId = order.Id });
+            order.OrderItems = tempOrderItems.ToList();
+            result.Status = Models.Status.Success;
+            result.Value = order;
+
+            return result;
         }
 
         public async Task<ResultWithValue<List<OutputOrder>>> GetOrdersByCustomerAsync(int customerId, CancellationToken cancellationToken = default)
