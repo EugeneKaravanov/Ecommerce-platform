@@ -4,6 +4,7 @@ using OrderService.Models;
 using OrderService.Services;
 using OrderService.Utilities.Factories;
 using ProductServiceGRPC;
+using System.Threading.RateLimiting;
 
 namespace OrderService.Repositories
 {
@@ -91,7 +92,27 @@ namespace OrderService.Repositories
 
         public async Task<List<OutputOrder>> GetOrdersAsync(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            List<OutputOrder> outputOrders = new();
+            string sqlStringForGetAllOrders = "SELECT * FROM Orders";
+            string sqlStringForGetOrderItemsByOrderId = "SELECT * FROM OrderItems WHERE orderid = @OrderId";
+
+            for(int i = 0; i < _shardConnectionFactory.BucketsCount; i++)
+            {
+                await using var connection = _shardConnectionFactory.GetConnectionByBucketId(_idCounterBucketId);
+                await connection.OpenAsync(cancellationToken);
+
+                var tempOrders = await connection.QueryAsync<OutputOrder>(sqlStringForGetAllOrders);
+                List<OutputOrder> orders = tempOrders.ToList();
+
+                foreach (OutputOrder order in orders)
+                {
+                    outputOrders.Add(order);
+                    var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsByOrderId, new { OrderId = order.Id });
+                    order.OrderItems = tempOrderItems.ToList();
+                }
+            }
+
+            return outputOrders;
         }
 
         public async Task<ResultWithValue<OutputOrder>> GetOrderAsync(int id, CancellationToken cancellationToken = default)
