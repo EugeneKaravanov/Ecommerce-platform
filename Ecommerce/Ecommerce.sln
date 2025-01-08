@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderSevice.FirstShardDB.Mi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderSevice.SecondShardDB.Migrations", "OrderSevice.SecondShardDB.Migrations\OrderSevice.SecondShardDB.Migrations.csproj", "{DCF1ED01-0C56-48BD-955E-57BA4157F9E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.Models", "OrderService.Models\OrderService.Models.csproj", "{807B97C9-4FE2-4968-AE80-76F04274BB03}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.Common", "OrderService.Models\OrderService.Common.csproj", "{807B97C9-4FE2-4968-AE80-76F04274BB03}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
