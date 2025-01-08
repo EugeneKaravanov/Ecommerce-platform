@@ -15,14 +15,18 @@ namespace OrderService.Utilities.Factories
 
         public int BucketsCount { get; set; }
 
-        public NpgsqlConnection GetConnectionByOrderId(int orderId, out string bucketName)
+        public NpgsqlConnection GetConnectionByOrderId(int orderId, out int bucketId)
         {
-            int bucketId = GetBucketNumberByOrderId(orderId);
+            bucketId = GetBucketNumberByOrderId(orderId);
+
             string connectionString = GetShardByBucketId(bucketId).ConnectionString;
 
-            bucketName = "bucket-" + bucketId;
-
             return new NpgsqlConnection(connectionString);
+        }
+
+        public NpgsqlConnection GetConnectionByBucketId(int bucketId)
+        {
+            return new NpgsqlConnection(GetShardByBucketId(bucketId).ConnectionString);
         }
 
         private int GetBucketNumberByOrderId(int orderId)
