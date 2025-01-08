@@ -17,19 +17,20 @@ List<string> shardConnectionStrings = new List<string>()
 };
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 
-builder.Services.AddGrpcClient<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>(productServiceadress, options => { options.Address = new Uri(productServiceadress); });
-builder.Services.AddScoped<IOrderRepository, OrderRepository>(serviceProvider =>
-{
-    var productServiceClient = serviceProvider.GetRequiredService<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>();
-
-    return new OrderRepository(deffaultConnectionString, productServiceClient);
-});
-builder.Services.AddScoped<OrderValidator>();
 builder.Services.AddSingleton<ShardConnectionFactory>();
 builder.Services.AddSingleton<ShardFactory>(serviceProvider =>
 {
     return new ShardFactory(shardConnectionStrings);
 });
+builder.Services.AddGrpcClient<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>(productServiceadress, options => { options.Address = new Uri(productServiceadress); });
+builder.Services.AddScoped<IOrderRepository, ShardOrderRepository>(serviceProvider =>
+{
+    var productServiceClient = serviceProvider.GetRequiredService<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>();
+    var shardConnectionFactory = serviceProvider.GetRequiredService<ShardConnectionFactory>();
+
+    return new ShardOrderRepository(shardConnectionFactory, productServiceClient);
+});
+builder.Services.AddScoped<OrderValidator>();
 builder.Services.AddGrpc();
 builder.Services.AddFluentMigratorCore()
     .ConfigureRunner(rb => rb

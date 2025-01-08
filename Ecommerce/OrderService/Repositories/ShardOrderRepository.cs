@@ -13,8 +13,7 @@ namespace OrderService.Repositories
         private readonly ShardConnectionFactory _shardConnectionFactory;
         private readonly ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient _productServiceClient;
         private readonly int _idCounterBucketId = 1;
-        private readonly int _customerIdGlobalIndex = 2;
-        private readonly int _regionIdGlobalIndex = 3;
+        private readonly int _customerIdGlobalIndexBucket = 2;
 
         public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient)
         {
@@ -42,9 +41,10 @@ namespace OrderService.Repositories
             foreach (OutputOrderItem item in orderItems)
                 totalAmount += item.UnitPrice * item.Quantity;
 
-            string SqlStringToInsertAndGetNewOrderId = @"WITH insert_result AS 
+            string SqlStringToInsertAndGetNewOrderId = @$"WITH insert_result AS 
                                                         (
-                                                            INSERT INTO IdCounter
+                                                            INSERT INTO Bucket{_idCounterBucketId}.IdCounter DEFAULT VALUES
+                                                            RETURNING id
                                                         )
                                                         SELECT id FROM insert_result";
 
@@ -150,7 +150,5 @@ namespace OrderService.Repositories
         {
             throw new NotImplementedException();
         }
-
-
     }
 }
