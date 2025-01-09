@@ -54,21 +54,17 @@ namespace OrderService.Repositories
             int bucketId;
             await using var bucketConnection = _shardConnectionFactory.GetConnectionByOrderId(id, out bucketId);
 
-            string sqlStrinForInsertOrderInOrders = @$"WITH insert_result AS 
-                                                    (
-                                                        INSERT INTO Bucket{bucketId}.Orders (customerid, orderdate, totalamount)
-                                                        VALUES (@Customerid, @Orderdate, @Totalamount)
-                                                        RETURNING id
-                                                    )
-                                                    SELECT id FROM insert_result";
+            string sqlStringForInsertOrderInOrders = @$"INSERT INTO Bucket{bucketId}.Orders (id, customerid, orderdate, totalamount)
+                                                        VALUES (@Id, @CustomerId, @Orderdate, @Totalamount)";
 
             string sqlStringForInsertOrderItemInOrderItems = @$"INSERT INTO Bucket{bucketId}.OrderItems (orderid, productid, quantity, unitprice)
                                                                 VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)";
 
             await bucketConnection.OpenAsync(cancellationToken);
 
-            int orderId = await bucketConnection.QuerySingleAsync<int>(sqlStrinForInsertOrderInOrders, new
+            await bucketConnection.ExecuteAsync(sqlStringForInsertOrderInOrders, new
             {
+                Id = id,
                 CustomerId = order.CustomerId,
                 Orderdate = DateTime.Now,
                 Totalamount = totalAmount,
@@ -77,13 +73,13 @@ namespace OrderService.Repositories
             foreach (var item in orderItems)
                 await bucketConnection.ExecuteAsync(sqlStringForInsertOrderItemInOrderItems, new
                 {
-                    OrderId = orderId,
+                    OrderId = id,
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice
                 });
             string sqlStringToInsertInCustomerIdGlobalIndex = @$"INSERT INTO Bucket{_customerIdGlobalIndexBucket}.CustomerIdGlobalIndex (Id, CustomerId)
-                                                                VALUES (@Id, @OCustomerId)";
+                                                                VALUES (@Id, @CustomerId)";
 
             await using var customerIdGlobalIndexConnection = _shardConnectionFactory.GetConnectionByBucketId(_customerIdGlobalIndexBucket);
             await customerIdGlobalIndexConnection.OpenAsync(cancellationToken);
@@ -108,7 +104,7 @@ namespace OrderService.Repositories
                 string sqlStringForGetAllOrders = $"SELECT * FROM Bucket{i}.Orders";
                 string sqlStringForGetOrderItemsByOrderId = $"SELECT * FROM Bucket{i}.OrderItems WHERE orderid = @OrderId";
 
-                await using var connection = _shardConnectionFactory.GetConnectionByBucketId(_idCounterBucketId);
+                await using var connection = _shardConnectionFactory.GetConnectionByBucketId(i);
                 await connection.OpenAsync(cancellationToken);
 
                 var tempOrders = await connection.QueryAsync<OutputOrder>(sqlStringForGetAllOrders);
@@ -160,13 +156,13 @@ namespace OrderService.Repositories
             ResultWithValue<List<OutputOrder>> result = new();
             result.Value = new();
             List<OutputOrder> outputOrders = new();
-            string sqlStringToGetOrderIdsBuCustomer = @$"SELECT Id FROM Bucket{_customerIdGlobalIndexBucket}.CustomerIdGlobalIndex
+            string sqlStringToGetOrderIdsByCustomer = @$"SELECT Id FROM Bucket{_customerIdGlobalIndexBucket}.CustomerIdGlobalIndex
                                                         WHERE customerid = @CustomerId";
 
             await using var customerIdGlobalIndexConnection = _shardConnectionFactory.GetConnectionByBucketId(_customerIdGlobalIndexBucket);
             await customerIdGlobalIndexConnection.OpenAsync(cancellationToken);
 
-            var tempOrderIds = await customerIdGlobalIndexConnection.QueryAsync<int>(sqlStringToGetOrderIdsBuCustomer, new { CustomerId = customerId });
+            var tempOrderIds = await customerIdGlobalIndexConnection.QueryAsync<int>(sqlStringToGetOrderIdsByCustomer, new { CustomerId = customerId });
             List<int> orderIds = tempOrderIds.ToList();
             List<int> bucketIds = _shardConnectionFactory.GetBucketsByOrderIds(orderIds);
 
@@ -180,16 +176,16 @@ namespace OrderService.Repositories
                 await connection.OpenAsync(cancellationToken);
 
                 var tempOrders = await connection.QueryAsync<OutputOrder>(sqlStringForGetOrdersByCustomerId, new { CustomerId = customerId });
-                List<OutputOrder> orders = tempOrders.ToList();
-                
-                foreach (var order in orders)
-                    outputOrders.Add(order);
+                List<OutputOrder> orders = tempOrders.ToList();  
 
-                foreach (OutputOrder order in outputOrders)
+                foreach (OutputOrder order in orders)
                 {
                     var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsById, new { OrderId = order.Id });
                     order.OrderItems = tempOrderItems.ToList();
                 }
+
+                foreach (var order in orders)
+                    outputOrders.Add(order);
             }
 
             if (outputOrders.Count == 0)
