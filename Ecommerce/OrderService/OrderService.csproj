@@ -28,9 +28,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OrderService.Models\OrderService.Common.csproj" />
-    <ProjectReference Include="..\OrderSevice.FirstShardDB.Migrations\OrderSevice.FirstShardDB.Migrations.csproj" />
-    <ProjectReference Include="..\OrderSevice.NoShardDB.Migrations\OrderSevice.NoShardDB.Migrations.csproj" />
-    <ProjectReference Include="..\OrderSevice.SecondShardDB.Migrations\OrderSevice.SecondShardDB.Migrations.csproj" />
+    <ProjectReference Include="..\OrderSevice.FirstShardDB.Migrations\OrderService.FirstShardDB.Migrations.csproj" />
+    <ProjectReference Include="..\OrderSevice.NoShardDB.Migrations\OrderService.NoShardDB.Migrations.csproj" />
+    <ProjectReference Include="..\OrderSevice.SecondShardDB.Migrations\OrderService.SecondShardDB.Migrations.csproj" />
   </ItemGroup>
 
 </Project>
