@@ -41,7 +41,7 @@ var app = builder.Build();
 
 app.MapGrpcService<OrderGRPCService>();
 
-CustomMigrationRunner runner = new CustomMigrationRunner();
+CustomMigrationRunner runner = new CustomMigrationRunner(shardConnectionStrings);
 
 runner.RunMigrations(deffaultConnectionString, typeof(NoShardMigration).Assembly);
 runner.RunMigrations(shardConnectionStrings[0], typeof(FirstShardInitialMigration).Assembly);

@@ -17,7 +17,7 @@ namespace OrderService.Migrations
                                 OrderDate TIMESTAMP,
                                 TotalAmount DECIMAL
                             );");
-            SqlCommands.Add($@"CREATE INDEX IF NOT EXISTS index_customer_id 
+            SqlCommands.Add($@"CREATE INDEX IF NOT EXISTS index_customer_id_{bucketId} 
                                ON Bucket{bucketId}.Orders (CustomerId);");
             SqlCommands.Add($@"CREATE TABLE Bucket{bucketId}.OrderItems 
                             (
