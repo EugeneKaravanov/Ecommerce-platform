@@ -9,11 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProductService", "ProductSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService", "OrderService\OrderService.csproj", "{43F7FFAC-4907-4DE6-8BAD-081AB7359026}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.NoShardDB.Migrations", "OrderSevice.NoShardDB.Migrations\OrderService.NoShardDB.Migrations.csproj", "{11A76201-E6F9-443E-8FD7-9F3DCE254A5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.NoShardDb.Migrations", "OrderSevice.NoShardDB.Migrations\OrderService.NoShardDb.Migrations.csproj", "{11A76201-E6F9-443E-8FD7-9F3DCE254A5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.FirstShardDB.Migrations", "OrderSevice.FirstShardDB.Migrations\OrderService.FirstShardDB.Migrations.csproj", "{912309D2-1EA3-40E1-93E7-7E5B8FC67882}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.FirstShardDb.Migrations", "OrderSevice.FirstShardDB.Migrations\OrderService.FirstShardDb.Migrations.csproj", "{912309D2-1EA3-40E1-93E7-7E5B8FC67882}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.SecondShardDB.Migrations", "OrderSevice.SecondShardDB.Migrations\OrderService.SecondShardDB.Migrations.csproj", "{DCF1ED01-0C56-48BD-955E-57BA4157F9E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.SecondShardDb.Migrations", "OrderSevice.SecondShardDB.Migrations\OrderService.SecondShardDb.Migrations.csproj", "{DCF1ED01-0C56-48BD-955E-57BA4157F9E5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.Common", "OrderService.Models\OrderService.Common.csproj", "{807B97C9-4FE2-4968-AE80-76F04274BB03}"
 EndProject

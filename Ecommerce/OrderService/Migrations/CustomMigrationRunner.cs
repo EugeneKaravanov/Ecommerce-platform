@@ -1,61 +1,31 @@
 ﻿using FluentMigrator.Runner;
-using OrderService.Migrations.NoShardDB;
-using OrderService.Migrations.FirstShardDB;
-using OrderService.Migrations.SecondShardDB;
-using OrderService.Utilities.Factories;
+using System.Reflection;
 
 namespace OrderService.Migrations
 {
     public class CustomMigrationRunner
     {
-        private readonly List<string> _shardConnectionStrings;
-
-        public CustomMigrationRunner(List<string> shardConnectionStrings)
+        public void RunMigrations(string connectionString, Assembly assembly)
         {
-            _shardConnectionStrings = shardConnectionStrings;
+            var serviceProvider = ConfigureMigrations(connectionString, assembly);
+
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
+                runner.MigrateUp();
+            }
         }
 
-        public void RunMigrationsForNoShardDB(string connectionString)
+        private ServiceProvider ConfigureMigrations(string connectionString, Assembly assembly)
         {
             var serviceProvider = new ServiceCollection().AddFluentMigratorCore()
                 .ConfigureRunner(rb => rb
                     .AddPostgres()
                     .WithGlobalConnectionString(connectionString)
-                    .ScanIn(typeof(NoShardMigration).Assembly).For.Migrations())
+                    .ScanIn(assembly).For.Migrations())
                     .BuildServiceProvider(false);
-            var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
 
-            runner.MigrateUp();
-        }
-
-        public void RunMigrationsForFirstShardDB(string connectionString)
-        {
-            var serviceProvider = new ServiceCollection().AddFluentMigratorCore()
-                .ConfigureRunner(rb => rb
-                    .AddPostgres()
-                    .WithGlobalConnectionString(connectionString)
-                    .ScanIn(typeof(FirstShardInitialMigration).Assembly).For.Migrations())
-                    .AddTransient<ShardFactory>()
-                    .AddSingleton(_shardConnectionStrings)
-                    .BuildServiceProvider(false);
-            var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
-
-            runner.MigrateUp();
-        }
-
-        public void RunMigrationForSecondShardDB(string connectionString)
-        {
-            var serviceProvider = new ServiceCollection().AddFluentMigratorCore()
-                .ConfigureRunner(rb => rb
-                    .AddPostgres()
-                    .WithGlobalConnectionString(connectionString)
-                    .ScanIn(typeof(SecondShardInitialMigration).Assembly).For.Migrations())
-                    .AddTransient<ShardFactory>()
-                    .AddSingleton(_shardConnectionStrings)
-                    .BuildServiceProvider(false);
-            var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
-
-            runner.MigrateUp();
+            return serviceProvider;
         }
     }
 }

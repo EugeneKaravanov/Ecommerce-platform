@@ -7,9 +7,22 @@ namespace OrderService.Migrations.NoShardDB
     {
         public override void Up()
         {
-            Execute.Sql(@"CREATE TABLE Orders (Id SERIAL PRIMARY KEY, CustomerId INT, OrderDate TIMESTAMP, TotalAmount DECIMAL);");
-            Execute.Sql(@"CREATE INDEX index_customer_id ON Orders (CustomerId);");
-            Execute.Sql(@"CREATE TABLE OrderItems (Id SERIAL PRIMARY KEY, OrderId INT REFERENCES orders(id), ProductId INT, Quantity INT, UnitPrice DECIMAL);");
+            Execute.Sql(@"CREATE TABLE Orders 
+                        (
+                            Id SERIAL PRIMARY KEY,
+                            CustomerId INT,
+                            OrderDate TIMESTAMP,
+                            TotalAmount DECIMAL
+                        );");
+            Execute.Sql(@"CREATE INDEX IF NOT EXISTS index_customer_id ON Orders (CustomerId);");
+            Execute.Sql(@"CREATE TABLE OrderItems 
+                        (
+                            Id SERIAL PRIMARY KEY,
+                            OrderId INT REFERENCES orders(id) ON DELETE CASCADE,
+                            ProductId INT,
+                            Quantity INT,
+                            UnitPrice DECIMAL
+                        );");
         }
 
         public override void Down() { }

@@ -21,16 +21,13 @@ namespace OrderService.Migrations.SecondShardDB
         {
             for (int i = 0; i < _shard.BucketsCount; i++)
             {
-                List<string> SQLCommands = SQLMethods.GetSQLCommandsToCreateNewBucket(_shard.GetBucketId(i));
+                List<string> SqlCommands = SqlMethods.GetSqlCommandsToCreateNewBucket(_shard.GetBucketId(i));
 
-                for (int j = 0; j < SQLCommands.Count; j++)
-                    Execute.Sql(SQLCommands[j]);
+                for (int j = 0; j < SqlCommands.Count; j++)
+                    Execute.Sql(SqlCommands[j]);
             }
         }
 
-        public override void Down()
-        {
-
-        }
+        public override void Down() { }
     }
 }
