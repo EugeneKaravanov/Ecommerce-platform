@@ -4,6 +4,7 @@ using OrderService.Models;
 using OrderService.Services;
 using OrderService.Utilities.Factories;
 using ProductServiceGRPC;
+using OrderService.Utilities;
 
 namespace OrderService.Repositories
 {

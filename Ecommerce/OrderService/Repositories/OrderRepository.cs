@@ -3,6 +3,7 @@ using Npgsql;
 using OrderService.Models;
 using OrderService.Services;
 using ProductServiceGRPC;
+using OrderService.Utilities;
 
 namespace OrderService.Repositories
 {
