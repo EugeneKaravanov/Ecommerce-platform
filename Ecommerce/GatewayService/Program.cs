@@ -2,6 +2,12 @@ using GatewayService.Middleware;
 using GatewayService.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 var orderServiceadress = builder.Configuration.GetValue<string>("OrderServiceAddress");
 
@@ -17,7 +23,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
 {
     app.UseSwagger();
     app.UseSwaggerUI();
