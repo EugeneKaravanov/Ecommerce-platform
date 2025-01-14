@@ -3,11 +3,6 @@ using GatewayService.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 var orderServiceadress = builder.Configuration.GetValue<string>("OrderServiceAddress");
 

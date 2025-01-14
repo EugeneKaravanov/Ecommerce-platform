@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+    
+  gateway-service:
+    image: gatewayservice-image
+    restart: always
+    ports:
+      - "7078:8080"
+
+  product-service:
+    image: productservice-image
+    restart: always
+    ports:
+      - "5144:8080"
+ 
+  order-service:
+    image: orderservice-image
+    restart: always
+    ports:
+      - "5017:8080"
+ 
+  products-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Products-DB
+    ports:
+      - "5433:5432"
+
+  orders-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Order-DB
+    ports:
+      - "5434:5432"
+
+  orders-shard1-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Orders-Shard1-DB
+    ports:
+      - "5435:5432"
+ 
+  orders-shard2-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Orders-Shard2-DB
+    ports:
+      - "5436:5432"
+
+

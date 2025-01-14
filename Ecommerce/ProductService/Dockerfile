@@ -15,4 +15,4 @@ COPY --from=build /app/out .
 ENV ASPNETCORE_ENVIRONMENT=Development
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "GatewayService.dll"]
+ENTRYPOINT ["dotnet", "ProductService.dll"]
