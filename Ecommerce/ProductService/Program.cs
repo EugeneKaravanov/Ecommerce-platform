@@ -7,6 +7,11 @@ using FluentMigrator.Runner;
 using ProductService.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
+var port = builder.Configuration.GetValue<int>("PORT", 8080);
+var url = $"http://0.0.0.0:{port}";
+
+builder.WebHost.UseUrls(url);
+builder.Configuration.AddEnvironmentVariables();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 

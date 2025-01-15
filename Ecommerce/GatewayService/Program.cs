@@ -2,6 +2,10 @@ using GatewayService.Middleware;
 using GatewayService.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+var port = builder.Configuration.GetValue<int>("PORT", 8080);
+var url = $"http://0.0.0.0:{port}";
+
+builder.WebHost.UseUrls(url);
 
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 var orderServiceadress = builder.Configuration.GetValue<string>("OrderServiceAddress");

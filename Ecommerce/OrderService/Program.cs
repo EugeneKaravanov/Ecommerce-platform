@@ -9,6 +9,11 @@ using OrderService.Utilities.Factories;
 using OrderService.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
+var port = builder.Configuration.GetValue<int>("PORT", 8080);
+var url = $"http://0.0.0.0:{port}";
+
+builder.WebHost.UseUrls(url);
+
 var deffaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 List<string> shardConnectionStrings = new List<string>()
 {
