@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Get Code
         uses: actions/checkout@v3
@@ -19,15 +19,15 @@ jobs:
       - name: Run tests
         run: dotnet test --no-build --verbosity normal ./Ecommerce/Ecommerce.sln
   docker-build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Get Code
         uses: actions/checkout@v3
       - name: Build Docker GatewayService
-        run: docker build --platform windows/amd64 -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile .
+        run: docker build --platform linux/amd64 -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile .
       - name: Print working directory
         run: pwd
       - name: Build Docker OrderService
-        run: docker build --platform windows/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile .
+        run: docker build --platform linux/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile .
       - name: Build Docker ProductService
-        run: docker build --platform windows/amd64 -t productservice-image -f ./Ecommerce/ProductService/Dockerfile .
+        run: docker build --platform linux/amd64 -t productservice-image -f ./Ecommerce/ProductService/Dockerfile .
