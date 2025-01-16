@@ -26,6 +26,6 @@ jobs:
       - name: Build Docker GatewayService
         run: docker build --platform linux/amd64 -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService/
       - name: Build Docker OrderService
-        run: docker build --platform linux/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce/OrderService
+        run: docker build --platform linux/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
       - name: Build Docker ProductService
         run: docker build --platform linux/amd64 -t productservice-image -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce/ProductService
