@@ -39,7 +39,7 @@ jobs:
             docker push ghcr.io/${REPOSITORY}/gatewayservice-image:latest
       - name: Build Docker OrderService
         run: |
-            docker build --platform linux/amd64 -t -t ghcr.io/${REPOSITORY}/orderservice-image:latest -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
+            docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/orderservice-image:latest -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
             docker push ghcr.io/${REPOSITORY}/orderservice-image:latest
       - name: Build Docker ProductService
         run: |
