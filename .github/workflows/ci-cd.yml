@@ -17,7 +17,7 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
-        run: dotnet test --no-build --verbosity normal ./Ecommerce/Ecommerce.sln
+        run: dotnet test --no-build --verbosity normal --configuration Release ./Ecommerce/Ecommerce.sln
   docker-build:
     runs-on: ubuntu-latest
     steps:
