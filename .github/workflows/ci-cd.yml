@@ -24,10 +24,10 @@ jobs:
       - name: Get Code
         uses: actions/checkout@v3
       - name: Build Docker GatewayService
-        run: docker build -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile .
+        run: docker build --platform linux/amd64 -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile .
       - name: Print working directory
         run: pwd
       - name: Build Docker OrderService
-        run: docker build -t orderservice-image -f ./OrderService/Dockerfile ./OrderService
+        run: docker build -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile .
       - name: Build Docker ProductService
-        run: docker build -t productservice-image -f ./ProductService/Dockerfile ./ProductService
+        run: docker build -t productservice-image -f ./Ecommerce/ProductService/Dockerfile .
