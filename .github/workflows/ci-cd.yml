@@ -12,8 +12,6 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ matrix.dotnet-version }}
       - name: Restore dependencies
         run: dotnet restore ./Ecommerce/Ecommerce.sln
       - name: Build
@@ -24,8 +22,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Build Docker GatewayService
-        run: docker build -t gatewayservice-image -f ./GatewayService
+        run: docker build -t gatewayservice-image -f ./GatewayService/Dockerfile ./GatewayService
       - name: Build Docker OrderService
-        run: docker build -t orderservice-image -f ./OrderService
+        run: docker build -t orderservice-image -f ./OrderService/Dockerfile ./OrderService
       - name: Build Docker ProductService
-        run: docker build -t productservice-image -f ./ProductService
+        run: docker build -t productservice-image -f ./ProductService/Dockerfile ./ProductService
