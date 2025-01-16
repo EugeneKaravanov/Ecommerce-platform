@@ -21,8 +21,10 @@ jobs:
   docker-build:
     runs-on: windows-latest
     steps:
+      - name: Get Code
+        uses: actions/checkout@v3
       - name: Build Docker GatewayService
-        run: docker build -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService
+        run: docker build -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile .
       - name: Print working directory
         run: pwd
       - name: Build Docker OrderService
