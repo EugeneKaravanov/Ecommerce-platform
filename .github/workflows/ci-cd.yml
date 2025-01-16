@@ -38,4 +38,5 @@ jobs:
       - name: Build and tag Docker image
         run: |
             repository=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+            echo "$repository"
             docker build -t ghcr.io/${repository}/gatewayservice-image:latest .
