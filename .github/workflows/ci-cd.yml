@@ -1,0 +1,24 @@
+name: ci-cd
+on:
+    workflow_dispatch:
+    push:
+    pull_request:
+jobs:
+    deploy:
+        strategy:
+            matrix:
+                dotnet-version: ['6.0.x', '7.0.x', '8.0.x']
+                os: [windows-latest, ubuntu-latest]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Get Code
+              uses: actions/checkout@v3
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v3ut@v3
+              with:
+                dotnet-version: ${{ matrix.dotnet-version }}
+            - name: Restore dependencies
+              run: dotnet restore
+            - name: Build
+              run: dotnet build --configuration Release
+

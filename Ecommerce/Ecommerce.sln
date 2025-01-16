@@ -20,6 +20,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{FC2F8533-C297-4927-9697-B7C734FFE662}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yml = docker-compose.yml
+		..\.github\workflows\ci-cd.yml = ..\.github\workflows\ci-cd.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService.Common", "OrderService.Common\OrderService.Common.csproj", "{9B88A26B-18AF-440B-8BA4-E8F3F6C53DAB}"
