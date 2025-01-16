@@ -36,5 +36,5 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build and tag Docker image
         run: |
-            repository=$(echo $github.repository | tr '[:upper:]' '[:lower:]')
+            repository=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
             docker build -t ghcr.io/${{ repository }}/gatewayservice-image:latest .
