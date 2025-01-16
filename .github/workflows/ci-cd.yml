@@ -20,4 +20,12 @@ jobs:
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
         run: dotnet test --configuration Release ./Ecommerce/Ecommerce.sln
-
+  docker-build:
+    runs-on: windows-latest
+    steps:
+      - name: Build Docker GatewayService
+        run: docker build -t gatewayservice-image -f ./GatewayService
+      - name: Build Docker OrderService
+        run: docker build -t orderservice-image -f ./OrderService
+      - name: Build Docker ProductService
+        run: docker build -t productservice-image -f ./ProductService
