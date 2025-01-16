@@ -18,21 +18,23 @@ jobs:
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
         run: dotnet test --no-build --verbosity normal --configuration Release ./Ecommerce/Ecommerce.sln
-  docker-build:
+  docker-build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Get Code
         uses: actions/checkout@v3
       - name: Build Docker GatewayService
-        run: docker build --platform linux/amd64 -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService/
+        run: |
+            repository=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+            echo "$repository"
+            docker build --platform linux/amd64 -t ghcr.io/${repository}/gatewayservice-image:latest -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService/
+            docker push --platform linux/amd64 -t ghcr.io/${repository}/gatewayservice-image:latest
+
       - name: Build Docker OrderService
         run: docker build --platform linux/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
       - name: Build Docker ProductService
         run: docker build --platform linux/amd64 -t productservice-image -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce/ProductService
-  push-to-container-registry:
-    runs-on: ubuntu-latest
-    needs: docker-build
-    steps:
+
       - name: Log in to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build and tag Docker image
