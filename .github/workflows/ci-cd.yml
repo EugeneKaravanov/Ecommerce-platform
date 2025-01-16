@@ -29,3 +29,9 @@ jobs:
         run: docker build --platform linux/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
       - name: Build Docker ProductService
         run: docker build --platform linux/amd64 -t productservice-image -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce/ProductService
+  push-to-container-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
