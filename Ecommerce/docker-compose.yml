@@ -7,14 +7,10 @@ services:
       POSTGRES_USER: User
       POSTGRES_PASSWORD: password
       POSTGRES_DB: Products-DB
-      POSTGRES_PORT: 5433
-    ports:
-      - "5433:5433"
     volumes:
       - products-db-data:/var/lib/postgresql/data
     networks:
       - main-network
-    command: postgres -p 5433
 
   orders-db:
     image: postgres
@@ -23,14 +19,10 @@ services:
       POSTGRES_USER: User
       POSTGRES_PASSWORD: password
       POSTGRES_DB: Orders-DB
-      POSTGRES_PORT: 5434
-    ports:
-      - "5434:5434"
     volumes:
       - orders-db-data:/var/lib/postgresql/data
     networks:
       - main-network
-    command: postgres -p 5434
 
   orders-shard1-db:
     image: postgres
@@ -39,14 +31,10 @@ services:
       POSTGRES_USER: User
       POSTGRES_PASSWORD: password
       POSTGRES_DB: Orders-Shard1-DB
-      POSTGRES_PORT: 5435
-    ports:
-      - "5435:5435"
     volumes:
       - orders-shard1-db-data:/var/lib/postgresql/data
     networks:
       - main-network
-    command: postgres -p 5435
  
   orders-shard2-db:
     image: postgres
@@ -55,14 +43,10 @@ services:
       POSTGRES_USER: User
       POSTGRES_PASSWORD: password
       POSTGRES_DB: Orders-Shard2-DB
-      POSTGRES_PORT: 5436
-    ports:
-      - "5436:5436"
     volumes:
       - orders-shard2-db-data:/var/lib/postgresql/data
     networks:
       - main-network
-    command: postgres -p 5436
 
   gateway-service:
     build:
@@ -70,12 +54,11 @@ services:
         dockerfile: Dockerfile
     restart: always
     environment:
-        ProductServiceAddress: http://product-service:5144
-        OrderServiceAddress: http://order-service:5017
+        ProductServiceAddress: http://product-service:8080
+        OrderServiceAddress: http://order-service:8080
         ASPNETCORE_ENVIRONMENT: Development
-        PORT: 7078
     ports:
-      - "7078:7078"
+      - "7078:8080"
     networks:
       - main-network
 
@@ -85,10 +68,7 @@ services:
         dockerfile: Dockerfile
     restart: always
     environment:
-        ConnectionStrings__DefaultConnection: Host=products-db;Port=5433;Database=Products-DB;Username=User;Password=password;
-        PORT: 5144
-    ports:
-      - "5144:5144"
+        ConnectionStrings__DefaultConnection: Host=products-db;Port=5432;Database=Products-DB;Username=User;Password=password;
     networks:
       - main-network
  
@@ -98,13 +78,10 @@ services:
         dockerfile: OrderService/Dockerfile
     restart: always
     environment:
-        ProductServiceAddress: http://product-service:5144
-        ConnectionStrings__DefaultConnection: Host=orders-db;Port=5434;Database=Orders-DB;Username=User;Password=password;
-        ConnectionStrings__FirstShardConnectionString: Host=orders-shard1-db;Port=5435;Database=Orders-Shard1-DB;Username=User;Password=password;
-        ConnectionStrings__SecondShardConnectionString: Host=orders-shard2-db;Port=5436;Database=Orders-Shard2-DB;Username=User;Password=password;
-        PORT: 5017
-    ports:
-      - "5017:5017"
+        ProductServiceAddress: http://product-service:8080
+        ConnectionStrings__DefaultConnection: Host=orders-db;Port=5432;Database=Orders-DB;Username=User;Password=password;
+        ConnectionStrings__FirstShardConnectionString: Host=orders-shard1-db;Port=5432;Database=Orders-Shard1-DB;Username=User;Password=password;
+        ConnectionStrings__SecondShardConnectionString: Host=orders-shard2-db;Port=5432;Database=Orders-Shard2-DB;Username=User;Password=password;
     networks:
       - main-network
 
