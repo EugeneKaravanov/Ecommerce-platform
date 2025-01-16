@@ -28,7 +28,7 @@ jobs:
             repository=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
             echo "$repository"
             docker build --platform linux/amd64 -t ghcr.io/${repository}/gatewayservice-image:latest -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService/
-            docker push --platform linux/amd64 -t ghcr.io/${repository}/gatewayservice-image:latest
+            docker push ghcr.io/${repository}/gatewayservice-image:latest
 
       - name: Build Docker OrderService
         run: docker build --platform linux/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
