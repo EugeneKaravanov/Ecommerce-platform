@@ -18,4 +18,6 @@ jobs:
         run: dotnet restore ./Ecommerce/Ecommerce.sln
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
+      - name: Run tests
+        run: dotnet test --configuration Release ./Ecommerce/Ecommerce.sln
 
