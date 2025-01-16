@@ -22,7 +22,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Build Docker GatewayService
-        run: docker build -t gatewayservice-image -f ./GatewayService/Dockerfile .
+        run: docker build -t gatewayservice-image -f ./GatewayService .
       - name: Build Docker OrderService
         run: docker build -t orderservice-image -f ./OrderService/Dockerfile ./OrderService
       - name: Build Docker ProductService
