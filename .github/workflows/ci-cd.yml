@@ -17,12 +17,12 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
-        run: dotnet test --configuration Release ./Ecommerce/Ecommerce.sln
+        run: dotnet test --no-build --verbosity normal ./Ecommerce/Ecommerce.sln
   docker-build:
     runs-on: windows-latest
     steps:
       - name: Build Docker GatewayService
-        run: docker build -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile /Ecommerce/GatewayService
+        run: docker build -t gatewayservice-image -f ./Ecommerce/GatewayService/Dockerfile /GatewayService
       - name: Print working directory
         run: pwd
       - name: Build Docker OrderService
