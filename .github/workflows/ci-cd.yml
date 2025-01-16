@@ -26,23 +26,22 @@ jobs:
     env:
       REPOSITORY: ${{ github.repository }}
     steps:
-      - run: |
-          echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Congigure jov
+        run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
       - name: Get Code
         uses: actions/checkout@v3
       - name: Log in to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Build Docker GatewayService
         run: |
             docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/gatewayservice-image:latest -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService/
             docker push ghcr.io/${REPOSITORY}/gatewayservice-image:latest
-
       - name: Build Docker OrderService
-        run: docker build --platform linux/amd64 -t orderservice-image -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
-      - name: Build Docker ProductService
-        run: docker build --platform linux/amd64 -t productservice-image -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce/ProductService
-      - name: Build and tag Docker image
         run: |
-            repository=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
-            echo "$repository"
-            docker build -t ghcr.io/${repository}/gatewayservice-image:latest .
+            docker build --platform linux/amd64 -t -t ghcr.io/${REPOSITORY}/orderservice-image:latest -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
+            docker push ghcr.io/${REPOSITORY}/orderservice-image:latest
+      - name: Build Docker ProductService
+        run: |
+            docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/productservice-image:latest -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce/ProductService
+            docker push ghcr.io/${REPOSITORY}/productservice-image:latest
