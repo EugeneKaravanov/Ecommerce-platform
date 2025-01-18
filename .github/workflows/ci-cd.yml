@@ -19,7 +19,7 @@ jobs:
       - name: Install dotnet-format tool
         run: dotnet tool restore
       - name: Run .NET Format
-        run: dotnet format ./Ecommerce/GatewayServiceGatewayService.csproj
+        run: dotnet format ./Ecommerce/GatewayServiceGatewayService.csproj --dry-run
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
