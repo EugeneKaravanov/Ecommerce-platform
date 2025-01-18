@@ -16,6 +16,10 @@ jobs:
         uses: actions/setup-dotnet@v3
       - name: Restore dependencies
         run: dotnet restore ./Ecommerce/Ecommerce.sln
+      - name: Install dotnet-format tool
+        run: dotnet tool restore
+      - name: Run .NET Format
+        run: dotnet format --check --verbosity diagnostic
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
