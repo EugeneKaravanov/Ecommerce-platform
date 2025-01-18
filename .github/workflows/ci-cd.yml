@@ -18,7 +18,7 @@ jobs:
             dotnet-version: 8.x
             cache: true
       - name: Restore dependencies
-        run: dotnet restore ./Ecommerce/Ecommerce.sln
+        run: dotnet restore --locked-mode ./Ecommerce/Ecommerce.sln
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
