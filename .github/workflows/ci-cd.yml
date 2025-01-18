@@ -19,9 +19,7 @@ jobs:
       - name: Install dotnet-format tool
         run: dotnet tool restore
       - name: Run .NET Format
-        run: |
-            cd ./Ecommerce/GatewayService
-            dotnet format GatewayService.csproj --check --verbosity diagnostic
+        run: dotnet format ./Ecommerce/GatewayServiceGatewayService.csproj
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
