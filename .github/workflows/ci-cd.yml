@@ -19,7 +19,7 @@ jobs:
       - name: Install dotnet-format tool
         run: dotnet tool restore
       - name: Run .NET Format
-        run: dotnet format ./Ecommerce/GatewayService/GatewayService.csproj
+        run: dotnet format ./Ecommerce/GatewayService/GatewayService.csproj --check
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Run tests
@@ -32,7 +32,7 @@ jobs:
     env:
       REPOSITORY: ${{ github.repository }}
     steps:
-      - name: Congigure jov
+      - name: Configure jov
         run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
       - name: Get Code
         uses: actions/checkout@v3
