@@ -99,7 +99,16 @@ jobs:
   push-docker-images:
     runs-on: ubuntu-latest
     needs: [gatewayservice-docker-build, orderservice-docker-build, productservice-docker-build]
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REPOSITORY: ${{ github.repository }}
     steps:
+      - name: Configure job
+        run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Download GatewayService image
         uses: actions/download-artifact@v3
         with:
@@ -118,6 +127,13 @@ jobs:
         run: docker load -i productservice-image.tar
       - name: Load OrderService docker image
         run: docker load -i orderservice-image.tar
+      - name: Push GatewayService docker image
+        run: docker push ghcr.io/${REPOSITORY}/gatewayservice-image:latest
+      - name: Push ProductService docker image
+        run: docker push ghcr.io/${REPOSITORY}/productservice-image:latest
+      - name: Push OrderService docker image
+        run: docker push ghcr.io/${REPOSITORY}/orderservice-image:latest
+
       
     
 
