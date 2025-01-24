@@ -3,8 +3,6 @@ on:
   workflow_dispatch:
   push:
   pull_request:
-    branches:
-      - main  
 
 jobs:
   build-check-and-test:
@@ -32,6 +30,7 @@ jobs:
       packages: write
     env:
       REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Configure job
         run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -56,6 +55,7 @@ jobs:
       packages: write
     env:
       REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Configure job
         run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -80,6 +80,7 @@ jobs:
       packages: write
     env:
       REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Configure job
         run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -104,6 +105,7 @@ jobs:
       packages: write
     env:
       REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Configure job
         run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
