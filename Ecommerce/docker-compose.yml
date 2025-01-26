@@ -1,0 +1,97 @@
+services:
+    
+  products-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Products-DB
+    volumes:
+      - products-db-data:/var/lib/postgresql/data
+    networks:
+      - main-network
+
+  orders-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Orders-DB
+    volumes:
+      - orders-db-data:/var/lib/postgresql/data
+    networks:
+      - main-network
+
+  orders-shard1-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Orders-Shard1-DB
+    volumes:
+      - orders-shard1-db-data:/var/lib/postgresql/data
+    networks:
+      - main-network
+ 
+  orders-shard2-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: User
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Orders-Shard2-DB
+    volumes:
+      - orders-shard2-db-data:/var/lib/postgresql/data
+    networks:
+      - main-network
+
+  gateway-service:
+    build:
+        context: ./GatewayService
+        dockerfile: Dockerfile
+    restart: always
+    environment:
+        ProductServiceAddress: http://product-service:8080
+        OrderServiceAddress: http://order-service:8080
+        ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "7078:8080"
+    networks:
+      - main-network
+
+  product-service:
+    build:
+        context: ./ProductService
+        dockerfile: Dockerfile
+    restart: always
+    environment:
+        ConnectionStrings__DefaultConnection: Host=products-db;Port=5432;Database=Products-DB;Username=User;Password=password;
+    networks:
+      - main-network
+ 
+  order-service:
+    build:
+        context: .
+        dockerfile: OrderService/Dockerfile
+    restart: always
+    environment:
+        ProductServiceAddress: http://product-service:8080
+        ConnectionStrings__DefaultConnection: Host=orders-db;Port=5432;Database=Orders-DB;Username=User;Password=password;
+        ConnectionStrings__FirstShardConnectionString: Host=orders-shard1-db;Port=5432;Database=Orders-Shard1-DB;Username=User;Password=password;
+        ConnectionStrings__SecondShardConnectionString: Host=orders-shard2-db;Port=5432;Database=Orders-Shard2-DB;Username=User;Password=password;
+    networks:
+      - main-network
+
+volumes:
+  products-db-data:
+  orders-db-data:
+  orders-shard1-db-data:
+  orders-shard2-db-data:
+
+networks:
+    main-network:
+
+

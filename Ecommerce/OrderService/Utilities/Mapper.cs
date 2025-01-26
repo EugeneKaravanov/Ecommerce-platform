@@ -3,11 +3,11 @@ using OrderService.Utilities;
 using OrderServiceGRPC;
 using ProductServiceGRPC;
 
-namespace OrderService.Services
+namespace OrderService.Utilities
 {
-    internal class Mapper
+    public class Mapper
     {
-        internal static TakeProductsRequest TransferListInputOrderItemToTakeProductsRequest(List<InputOrderItem> orderItems)
+        public static TakeProductsRequest TransferListInputOrderItemToTakeProductsRequest(List<InputOrderItem> orderItems)
         {
             TakeProductsRequest takeProductsRequest = new();
 
@@ -23,7 +23,7 @@ namespace OrderService.Services
             return takeProductsRequest;
         }
 
-        internal static List<OutputOrderItem> TransferTakeProductResponseToListOutputOrderItem(TakeProductsResponse takeProductsResponse)
+        public static List<OutputOrderItem> TransferTakeProductResponseToListOutputOrderItem(TakeProductsResponse takeProductsResponse)
         {
             List<OutputOrderItem> orderItems = new();
 
@@ -41,7 +41,7 @@ namespace OrderService.Services
             return orderItems;
         }
 
-        internal static GetOrdersResponse TransferListOutputOrderToGetOrdersResponse(List<OutputOrder> outputOrders)
+        public static GetOrdersResponse TransferListOutputOrderToGetOrdersResponse(List<OutputOrder> outputOrders)
         {
             GetOrdersResponse getOrdersResponse = new();
 
@@ -51,7 +51,7 @@ namespace OrderService.Services
             return getOrdersResponse;
         }
 
-        internal static OutputOrderGRPC TransferOutputOrderToOutputOrderGRPC(OutputOrder outputOrder)
+        public static OutputOrderGRPC TransferOutputOrderToOutputOrderGRPC(OutputOrder outputOrder)
         {
             OutputOrderGRPC outputOrderGRPC = new();
 
@@ -66,7 +66,7 @@ namespace OrderService.Services
             return outputOrderGRPC;
         }
 
-        internal static OutputOrderItemGRPC TransferOutputOrderItemToOutputOrderItemGRPC(OutputOrderItem outputOrderItem)
+        public static OutputOrderItemGRPC TransferOutputOrderItemToOutputOrderItemGRPC(OutputOrderItem outputOrderItem)
         {
             OutputOrderItemGRPC outputOrderItemGRPC = new();
 
@@ -77,7 +77,7 @@ namespace OrderService.Services
             return outputOrderItemGRPC;
         }
 
-        internal static InputOrder TransferCreateOrderRequestToInputOrder(CreateOrderRequest createOrderRequest)
+        public static InputOrder TransferCreateOrderRequestToInputOrder(CreateOrderRequest createOrderRequest)
         {
             InputOrder inputOrder = new();
             inputOrder.OrderItems = new();
@@ -90,7 +90,7 @@ namespace OrderService.Services
             return inputOrder;
         }
 
-        internal static InputOrderItem TransferInputOrderItemGRPCToInputOrderItem(InputOrderItemGRPC inputOrderItemGRPC)
+        public static InputOrderItem TransferInputOrderItemGRPCToInputOrderItem(InputOrderItemGRPC inputOrderItemGRPC)
         {
             InputOrderItem inputOrderItem = new();
 
@@ -100,7 +100,7 @@ namespace OrderService.Services
             return inputOrderItem;
         }
 
-        internal static OrderServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)
+        public static OrderServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)
         {
             switch (status)
             {

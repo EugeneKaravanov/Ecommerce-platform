@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+	<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,16 +22,16 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <Protobuf Include="Protos\OrderServiceGRPC.proto" GrpcServices="Service" AdditionalImportDirs="Protos\googleapis" />
-	  		<Protobuf Include="Protos\ProductServiceGRPC.proto" GrpcServices="Client" AdditionalImportDirs="Protos\googleapis" />	  
-	  <Protobuf Include="Protos\googleapis\google\type\money.proto" />
+    <ProjectReference Include="..\OrderService.Common\OrderService.Common.csproj" />
+    <ProjectReference Include="..\OrderService.FirstShardDB.Migrations\OrderService.FirstShardDB.Migrations.csproj" />
+    <ProjectReference Include="..\OrderService.NoShardDB.Migrations\OrderService.NoShardDB.Migrations.csproj" />
+    <ProjectReference Include="..\OrderService.SecondShardDB.Migrations\OrderService.SecondShardDB.Migrations.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OrderService.Models\OrderService.Common.csproj" />
-    <ProjectReference Include="..\OrderSevice.FirstShardDB.Migrations\OrderService.FirstShardDb.Migrations.csproj" />
-    <ProjectReference Include="..\OrderSevice.NoShardDB.Migrations\OrderService.NoShardDb.Migrations.csproj" />
-    <ProjectReference Include="..\OrderSevice.SecondShardDB.Migrations\OrderService.SecondShardDb.Migrations.csproj" />
+	  <Protobuf Include="Protos\OrderServiceGRPC.proto" GrpcServices="Service" AdditionalImportDirs="Protos\googleapis" />
+	  		<Protobuf Include="Protos\ProductServiceGRPC.proto" GrpcServices="Client" AdditionalImportDirs="Protos\googleapis" />	  
+	  <Protobuf Include="Protos\googleapis\google\type\money.proto" />
   </ItemGroup>
 
 </Project>

@@ -9,6 +9,7 @@ using OrderService.Utilities.Factories;
 using OrderService.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var deffaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 List<string> shardConnectionStrings = new List<string>()
 {

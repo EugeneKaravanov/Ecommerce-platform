@@ -7,6 +7,7 @@ using static OrderServiceGRPC.OrderServiceGRPC;
 using OperationStatusResponse = OrderServiceGRPC.OperationStatusResponse;
 using ProductServiceGRPC;
 using OrderService.Validators;
+using OrderService.Utilities;
 
 namespace OrderService.Services
 {
