@@ -12,17 +12,16 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
-        with:
-            dotnet-version: 8.x
-            cache: true
       - name: Restore dependencies
-        run: dotnet restore ./Ecommerce/Ecommerce.sln --locked-mode
+        run: dotnet restore ./Ecommerce/Ecommerce.sln
       - name: Install dotnet-format tool
         run: dotnet tool restore
       - name: Run .NET Format
         run: dotnet format ./Ecommerce/GatewayService/GatewayService.csproj
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
       - name: Run tests
         run: dotnet test --no-build --verbosity normal --configuration Release ./Ecommerce/Ecommerce.sln
   gatewayservice-docker-build:
