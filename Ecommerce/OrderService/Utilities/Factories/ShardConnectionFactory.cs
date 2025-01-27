@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using OrderService.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace OrderService.Utilities.Factories
 {
@@ -41,7 +42,7 @@ namespace OrderService.Utilities.Factories
 
         private int GetBucketNumberByOrderId(int orderId)
         {
-            return orderId % BucketsCount;
+            return int.Parse(orderId.ToString().Substring(0, 1));
         }
 
         private int GetBucketsCount()
@@ -50,7 +51,7 @@ namespace OrderService.Utilities.Factories
             int count = 0;
 
             foreach (Shard shard in shards)
-                count += shard.BucketsCount;
+                count += shard.Buckets.Length;
 
             return count;
         }
@@ -62,7 +63,7 @@ namespace OrderService.Utilities.Factories
 
             foreach (Shard shard in shards)
             {
-                if (shard.BucketsIds.Contains(bucketId))
+                if (Array.Exists(shard.Buckets, id => id == bucketId))
                 {
                     outputShard = shard;
                     return outputShard;

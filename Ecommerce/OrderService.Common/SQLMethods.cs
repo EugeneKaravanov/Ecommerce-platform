@@ -1,13 +1,11 @@
-﻿using FluentMigrator;
-using FluentMigrator.Expressions;
-
-namespace OrderService.Migrations
+﻿namespace OrderService.Migrations
 {
     public static class SqlMethods
     {
         public static List<string> GetSqlCommandsToCreateNewBucket(int bucketId)
         {
             List<string> SqlCommands = new List<string>();
+            int idCounterModifier = 1000000;
 
             SqlCommands.Add($@"CREATE SCHEMA Bucket{bucketId};");
             SqlCommands.Add($@"CREATE TABLE Bucket{bucketId}.Orders 
@@ -27,6 +25,12 @@ namespace OrderService.Migrations
                                 Quantity INT,
                                 UnitPrice DECIMAL
                             );");
+            SqlCommands.Add($@"CREATE SEQUENCE Bucket{bucketId}.IdCounter
+                                    INCREMENT BY 1
+                                    START WITH {bucketId * idCounterModifier}
+                                    MINVALUE {bucketId * idCounterModifier}
+                                    MAXVALUE {bucketId * idCounterModifier + idCounterModifier - 1}
+                                    CACHE 1;");
 
             return SqlCommands;
         }

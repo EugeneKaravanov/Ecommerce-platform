@@ -1,4 +1,5 @@
 ﻿using FluentMigrator.Runner;
+using OrderService.Models;
 using OrderService.Utilities.Factories;
 using System.Reflection;
 
@@ -6,11 +7,11 @@ namespace OrderService.Migrations
 {
     public class CustomMigrationRunner
     {
-        private readonly List<string> _shardConnectionStrings;
+        private readonly List<Shard> _shards;
 
-        public CustomMigrationRunner(List<string> shardConnectionStrings)
+        public CustomMigrationRunner(List<Shard> shards)
         {
-            _shardConnectionStrings = shardConnectionStrings;
+            _shards = shards;
         }
 
         public void RunMigrations(string connectionString, Assembly assembly)
@@ -32,7 +33,7 @@ namespace OrderService.Migrations
                     .WithGlobalConnectionString(connectionString)
                     .ScanIn(assembly).For.Migrations())
                     .AddTransient<ShardFactory>()
-                    .AddSingleton(_shardConnectionStrings)                    
+                    .AddSingleton(_shards)                    
                     .BuildServiceProvider(false);
 
             return serviceProvider;

@@ -3,6 +3,7 @@ using OrderService.Migrations;
 using OrderService.Migrations.FirstShardDB;
 using OrderService.Migrations.NoShardDB;
 using OrderService.Migrations.SecondShardDB;
+using OrderService.Models;
 using OrderService.Repositories;
 using OrderService.Services;
 using OrderService.Utilities.Factories;
@@ -10,18 +11,14 @@ using OrderService.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var deffaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-List<string> shardConnectionStrings = new List<string>()
-{
-    builder.Configuration.GetConnectionString("FirstShardConnectionString"),
-    builder.Configuration.GetConnectionString("SecondShardConnectionString")
-};
+var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var shards = builder.Configuration.GetSection("Shards").Get<List<Shard>>();
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 
 builder.Services.AddSingleton<ShardConnectionFactory>();
 builder.Services.AddSingleton<ShardFactory>(serviceProvider =>
 {
-    return new ShardFactory(shardConnectionStrings);
+    return new ShardFactory(shards);
 });
 builder.Services.AddGrpcClient<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>(productServiceadress, options => { options.Address = new Uri(productServiceadress); });
 builder.Services.AddScoped<IOrderRepository, ShardOrderRepository>(serviceProvider =>
@@ -42,10 +39,10 @@ var app = builder.Build();
 
 app.MapGrpcService<OrderGRPCService>();
 
-CustomMigrationRunner runner = new CustomMigrationRunner(shardConnectionStrings);
+CustomMigrationRunner runner = new CustomMigrationRunner(shards);
 
-runner.RunMigrations(deffaultConnectionString, typeof(NoShardMigration).Assembly);
-runner.RunMigrations(shardConnectionStrings[0], typeof(FirstShardInitialMigration).Assembly);
-runner.RunMigrations(shardConnectionStrings[1], typeof(SecondShardInitialMigration).Assembly);
+runner.RunMigrations(defaultConnectionString, typeof(NoShardMigration).Assembly);
+runner.RunMigrations(shards[0].ConnectionString, typeof(FirstShardInitialMigration).Assembly);
+runner.RunMigrations(shards[1].ConnectionString, typeof(SecondShardInitialMigration).Assembly);
 
 app.Run();

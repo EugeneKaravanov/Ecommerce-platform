@@ -19,7 +19,7 @@ namespace OrderService.Migrations.FirstShardDB
 
         public override void Up()
         {
-            for (int i = 0; i < _shard.BucketsCount; i++)
+            for (int i = 0; i < _shard.Buckets.Length; i++)
             {
                 List<string> SqlCommands = SqlMethods.GetSqlCommandsToCreateNewBucket(_shard.GetBucketId(i));
 

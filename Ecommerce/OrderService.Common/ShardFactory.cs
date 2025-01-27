@@ -4,12 +4,11 @@ namespace OrderService.Utilities.Factories
 {
     public class ShardFactory
     {
-        private List<Shard> _shards = new List<Shard>();
+        private readonly List<Shard> _shards;
 
-        public ShardFactory(List<string> connectionStrings) 
+        public ShardFactory(List<Shard> shards) 
         {
-            _shards.Add(new Shard(connectionStrings[0], new List<int> { 0, 1, 2, 3}));
-            _shards.Add(new Shard(connectionStrings[1], new List<int> { 4, 5, 6, 7 }));
+            _shards = shards;
         }
 
         public List<Shard> GetAllShards()

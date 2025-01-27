@@ -12,8 +12,8 @@ namespace OrderService.Repositories
     {
         private readonly ShardConnectionFactory _shardConnectionFactory;
         private readonly ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient _productServiceClient;
-        private readonly int _idCounterBucketId = 1;
         private readonly int _customerIdGlobalIndexBucket = 2;
+        private readonly Random _random = new Random();
 
         public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient)
         {
@@ -35,24 +35,20 @@ namespace OrderService.Repositories
                 return result;
             }
 
+            int bucketId =  _random.Next(0, _shardConnectionFactory.BucketsCount);
             List<OutputOrderItem> orderItems = Mapper.TransferTakeProductResponseToListOutputOrderItem(response);
+
             decimal totalAmount = 0;
 
             foreach (OutputOrderItem item in orderItems)
                 totalAmount += item.UnitPrice * item.Quantity;
 
-            string SqlStringToInsertAndGetNewOrderId = @$"WITH insert_result AS 
-                                                        (
-                                                            INSERT INTO Bucket{_idCounterBucketId}.IdCounter DEFAULT VALUES
-                                                            RETURNING id
-                                                        )
-                                                        SELECT id FROM insert_result";
+            string sqlStringToInsertAndGetNewOrderId = @$"SELECT NEXTVAL('Bucket{bucketId}.IdCounter');";
 
-            await using var idCounterConnection = _shardConnectionFactory.GetConnectionByBucketId(_idCounterBucketId);
+            await using var idCounterConnection = _shardConnectionFactory.GetConnectionByBucketId(bucketId);
             await idCounterConnection.OpenAsync();
-            int id = await idCounterConnection.QuerySingleAsync<int>(SqlStringToInsertAndGetNewOrderId);
+            int id = await idCounterConnection.QuerySingleAsync<int>(sqlStringToInsertAndGetNewOrderId);
 
-            int bucketId;
             await using var bucketConnection = _shardConnectionFactory.GetConnectionByOrderId(id, out bucketId);
 
             string sqlStringForInsertOrderInOrders = @$"INSERT INTO Bucket{bucketId}.Orders (id, customerid, orderdate, totalamount)
@@ -97,7 +93,7 @@ namespace OrderService.Repositories
 
             await using var customerIdGlobalIndexConnection = _shardConnectionFactory.GetConnectionByBucketId(_customerIdGlobalIndexBucket);
             await customerIdGlobalIndexConnection.OpenAsync();
-            await bucketConnection.ExecuteAsync(sqlStringToInsertInCustomerIdGlobalIndex, new
+            await customerIdGlobalIndexConnection.ExecuteAsync(sqlStringToInsertInCustomerIdGlobalIndex, new
             {
                 Id = id,
                 CustomerId = order.CustomerId,

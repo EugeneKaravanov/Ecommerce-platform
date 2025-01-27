@@ -155,7 +155,7 @@ namespace ProductService.Repositories
                 if (updateStatus == "SUCCESS")
                 {
                     result.Status = Models.Status.Success;
-                    result.Message = "Продукт успешно добавлен!";
+                    result.Message = "Продукт успешно обновлен!";
 
                     return result;
                 }
