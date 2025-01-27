@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 	<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup>
 	  <PackageReference Include="Google.Protobuf" Version="3.27.2" />
