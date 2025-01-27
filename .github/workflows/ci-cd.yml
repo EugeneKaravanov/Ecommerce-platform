@@ -18,6 +18,10 @@ jobs:
         run: dotnet tool restore
       - name: Run .NET Format
         run: dotnet format ./Ecommerce/GatewayService/GatewayService.csproj
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'csharp'
       - name: Build
         run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
       - name: Perform CodeQL Analysis
