@@ -80,8 +80,8 @@ services:
     environment:
         ProductServiceAddress: http://product-service:8080
         ConnectionStrings__DefaultConnection: Host=orders-db;Port=5432;Database=Orders-DB;Username=User;Password=password;
-        ConnectionStrings__Shards__0__ConnectionString: Host=orders-shard1-db;Port=5432;Database=Orders-Shard1-DB;Username=User;Password=password;
-        ConnectionStrings__Shards__1__ConnectionString: Host=orders-shard2-db;Port=5432;Database=Orders-Shard2-DB;Username=User;Password=password;
+        Shards__0__ConnectionString: Host=orders-shard1-db;Port=5432;Database=Orders-Shard1-DB;Username=User;Password=password;
+        Shards__1__ConnectionString: Host=orders-shard2-db;Port=5432;Database=Orders-Shard2-DB;Username=User;Password=password;
     networks:
       - main-network
 
