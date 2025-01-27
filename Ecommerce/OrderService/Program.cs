@@ -1,4 +1,6 @@
 using FluentMigrator.Runner;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using OrderService.Migrations;
 using OrderService.Migrations.FirstShardDB;
 using OrderService.Migrations.NoShardDB;
@@ -8,13 +10,22 @@ using OrderService.Repositories;
 using OrderService.Services;
 using OrderService.Utilities.Factories;
 using OrderService.Validators;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var shards = builder.Configuration.GetSection("Shards").Get<List<Shard>>();
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+Log.Logger.Error("Œ¯Ë·Í‡");
+Console.WriteLine(shards.IsNullOrEmpty());
+Console.WriteLine($"“≈—“: {shards[1].Buckets.Length}");
+Console.WriteLine($"“≈—“: {shards[2].ConnectionString}");
 
+builder.Host.UseSerilog();
 builder.Services.AddSingleton<ShardConnectionFactory>();
 builder.Services.AddSingleton<ShardFactory>(serviceProvider =>
 {

@@ -5,6 +5,7 @@ using OrderService.Services;
 using OrderService.Utilities.Factories;
 using ProductServiceGRPC;
 using OrderService.Utilities;
+using Serilog;
 
 namespace OrderService.Repositories
 {
@@ -85,6 +86,9 @@ namespace OrderService.Repositories
                 catch
                 {
                     await transaction.RollbackAsync();
+                    Log.Logger.Error("При выполнении метода CreateOrderAsync не удалось завершить транзакцию записи в БД!");
+
+                    throw new Exception("При выполнении метода CreateOrderAsync не удалось завершить транзакцию записи в БД!");
                 }
             }
 
