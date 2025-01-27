@@ -17,13 +17,14 @@ var builder = WebApplication.CreateBuilder(args);
 var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var shards = builder.Configuration.GetSection("Shards").Get<List<Shard>>();
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
-Log.Logger.Error("Îøèáêà");
+
 Console.WriteLine(shards.IsNullOrEmpty());
-Console.WriteLine($"ÒÅÑÒ: {shards[1].Buckets.Length}");
-Console.WriteLine($"ÒÅÑÒ: {shards[2].ConnectionString}");
+Console.WriteLine($"ÒÅÑÒ: {shards[0].Buckets.Length}");
+Console.WriteLine($"ÒÅÑÒ: {shards[1].ConnectionString}");
 
 builder.Host.UseSerilog();
 builder.Services.AddSingleton<ShardConnectionFactory>();
