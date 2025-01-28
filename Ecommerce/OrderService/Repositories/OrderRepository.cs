@@ -105,7 +105,7 @@ namespace OrderService.Repositories
 
             await connection.OpenAsync(cancellationToken);
 
-            OutputOrder? order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
+            OutputOrder order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
 
             if (order == null)
             {

@@ -50,8 +50,8 @@ services:
 
   gateway-service:
     build:
-        context: ./GatewayService
-        dockerfile: Dockerfile
+        context: .
+        dockerfile: GatewayService/Dockerfile
     restart: always
     environment:
         ProductServiceAddress: http://product-service:8080
@@ -64,8 +64,8 @@ services:
 
   product-service:
     build:
-        context: ./ProductService
-        dockerfile: Dockerfile
+        context: .
+        dockerfile: ProductService/Dockerfile
     restart: always
     environment:
         ConnectionStrings__DefaultConnection: Host=products-db;Port=5432;Database=Products-DB;Username=User;Password=password;

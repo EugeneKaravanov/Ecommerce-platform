@@ -150,7 +150,7 @@ namespace ProductService.Repositories
 
             try
             {
-                string? updateStatus = await connection.QuerySingleOrDefaultAsync<string?>(sqlString, productWithId);
+                string updateStatus = await connection.QuerySingleOrDefaultAsync<string>(sqlString, productWithId);
 
                 if (updateStatus == "SUCCESS")
                 {

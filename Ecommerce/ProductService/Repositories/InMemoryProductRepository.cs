@@ -171,7 +171,7 @@ namespace ProductService.Repositories
             throw new NotImplementedException();
         }
 
-        private int GetFiltredProductsCount(string? nameFilter, uint? minPriceFilter, uint? maxPriceFilter)
+        private int GetFiltredProductsCount(string nameFilter, uint? minPriceFilter, uint? maxPriceFilter)
         {
             int count = _products.
                 Where(product => nameFilter == null || product.Value.Name.Contains(nameFilter)).
