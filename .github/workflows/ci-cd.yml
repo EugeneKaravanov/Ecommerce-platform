@@ -22,8 +22,7 @@ jobs:
         with:
             dotnet-version: 8.x
             cache: true
-            cache-version-origin: github-actions
-            cache-version-file: './Ecommerce/**/packages.lock.json'
+            cache-dependency-path: './Ecommerce/**/packages.lock.json'
       - name: Restore dependencies
         run: dotnet restore ./Ecommerce/Ecommerce.sln --locked-mode
       - name: Install dotnet-format tool
