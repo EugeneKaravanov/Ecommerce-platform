@@ -86,7 +86,7 @@ namespace OrderService.Repositories
                 catch
                 {
                     await transaction.RollbackAsync();
-                    Log.Logger.Error("При выполнении метода CreateOrderAsync не удалось завершить транзакцию записи в БД!");
+                    //Здесь когда-нибудь должен появиться логгер
 
                     throw;
                 }
