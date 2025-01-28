@@ -59,7 +59,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build Docker GatewayService
-        run: docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/gatewayservice-image:latest -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService/
+        run: docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/gatewayservice-image:latest -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce
       - name: Save Docker image
         run: docker save ghcr.io/${REPOSITORY}/gatewayservice-image:latest -o gatewayservice-image.tar
       - name: Upload image-artifact
@@ -109,7 +109,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build Docker ProductService
-        run: docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/productservice-image:latest -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce/ProductService
+        run: docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/productservice-image:latest -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce
       - name: Save Docker image
         run: docker save ghcr.io/${REPOSITORY}/productservice-image:latest -o productservice-image.tar
       - name: Upload image-artifact
