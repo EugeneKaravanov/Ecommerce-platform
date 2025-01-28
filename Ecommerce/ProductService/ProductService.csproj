@@ -2,24 +2,25 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>ProductService</RootNamespace>
+	<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="FluentMigrator" Version="6.2.0" />
-    <PackageReference Include="FluentMigrator.Runner" Version="6.2.0" />
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.29.0" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
-    <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.67.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.67.0">
+    <PackageReference Include="Dapper"/>
+	  <PackageReference Include="FluentMigrator"/>
+	  <PackageReference Include="FluentMigrator.Runner"/>
+	  <PackageReference Include="FluentValidation.AspNetCore"/>
+	  <PackageReference Include="Google.Protobuf"/>
+	  <PackageReference Include="Grpc.AspNetCore"/>
+	  <PackageReference Include="Grpc.AspNetCore.Server.Reflection"/>
+	  <PackageReference Include="Grpc.Tools">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Npgsql" Version="9.0.1" />
+	  <PackageReference Include="Npgsql"/>
   </ItemGroup>
 
 	<ItemGroup>

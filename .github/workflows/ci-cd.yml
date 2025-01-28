@@ -1,0 +1,161 @@
+name: ci-cd
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [synchronize, reopened, closed]
+
+jobs:
+  build-check-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        id-token: write
+        pull-requests: write
+        actions: read
+        checks: write
+        security-events: write
+    steps:
+      - name: Get Code
+        uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+            dotnet-version: 8.x
+            cache: true
+            cache-dependency-path: './Ecommerce/**/packages.lock.json'
+      - name: Restore dependencies
+        run: dotnet restore ./Ecommerce/Ecommerce.sln --locked-mode
+      - name: Install dotnet-format tool
+        run: dotnet tool restore
+      - name: Run .NET Format
+        run: dotnet format ./Ecommerce/GatewayService/GatewayService.csproj
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'csharp'
+      - name: Build
+        run: dotnet build --configuration Release ./Ecommerce/Ecommerce.sln
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal --configuration Release ./Ecommerce/Ecommerce.sln
+  gatewayservice-docker-build:
+    runs-on: ubuntu-latest
+    needs: build-check-and-test
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Configure job
+        run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Get Code
+        uses: actions/checkout@v3
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Build Docker GatewayService
+        run: docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/gatewayservice-image:latest -f ./Ecommerce/GatewayService/Dockerfile ./Ecommerce/GatewayService/
+      - name: Save Docker image
+        run: docker save ghcr.io/${REPOSITORY}/gatewayservice-image:latest -o gatewayservice-image.tar
+      - name: Upload image-artifact
+        uses: actions/upload-artifact@v3
+        with:
+            path: gatewayservice-image.tar
+            name: gatewayservice-image
+  orderservice-docker-build:
+    runs-on: ubuntu-latest
+    needs: build-check-and-test
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Configure job
+        run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Get Code
+        uses: actions/checkout@v3
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Build Docker OrderService
+        run: docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/orderservice-image:latest -f ./Ecommerce/OrderService/Dockerfile ./Ecommerce
+      - name: Save Docker image
+        run: docker save ghcr.io/${REPOSITORY}/orderservice-image:latest -o orderservice-image.tar
+      - name: Upload image-artifact
+        uses: actions/upload-artifact@v3
+        with:
+            path: orderservice-image.tar
+            name: orderservice-image
+  productservice-docker-build:
+    runs-on: ubuntu-latest
+    needs: build-check-and-test
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Configure job
+        run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Get Code
+        uses: actions/checkout@v3
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Build Docker ProductService
+        run: docker build --platform linux/amd64 -t ghcr.io/${REPOSITORY}/productservice-image:latest -f ./Ecommerce/ProductService/Dockerfile ./Ecommerce/ProductService
+      - name: Save Docker image
+        run: docker save ghcr.io/${REPOSITORY}/productservice-image:latest -o productservice-image.tar
+      - name: Upload image-artifact
+        uses: actions/upload-artifact@v3
+        with:
+            path: productservice-image.tar
+            name: productservice-image
+  push-docker-images:
+    runs-on: ubuntu-latest
+    needs: [gatewayservice-docker-build, orderservice-docker-build, productservice-docker-build]
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REPOSITORY: ${{ github.repository }}
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Configure job
+        run:  echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Download GatewayService image
+        uses: actions/download-artifact@v3
+        with:
+            name: gatewayservice-image
+      - name: Download ProductService image
+        uses: actions/download-artifact@v3
+        with:
+            name: productservice-image
+      - name: Download OrderService image
+        uses: actions/download-artifact@v3
+        with:
+            name: orderservice-image
+      - name: Load GatewayService docker image
+        run: docker load -i gatewayservice-image.tar
+      - name: Load ProductService docker image
+        run: docker load -i productservice-image.tar
+      - name: Load OrderService docker image
+        run: docker load -i orderservice-image.tar
+      - name: Push GatewayService docker image
+        run: docker push ghcr.io/${REPOSITORY}/gatewayservice-image:latest
+      - name: Push ProductService docker image
+        run: docker push ghcr.io/${REPOSITORY}/productservice-image:latest
+      - name: Push OrderService docker image
+        run: docker push ghcr.io/${REPOSITORY}/orderservice-image:latest
+
+      
+    
+

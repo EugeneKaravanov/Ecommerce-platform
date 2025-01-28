@@ -7,6 +7,7 @@ using FluentMigrator.Runner;
 using ProductService.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddSingleton<IProductRepository, ProductRepository>(_ => new (connectionString));

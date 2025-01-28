@@ -3,6 +3,7 @@ using Npgsql;
 using OrderService.Models;
 using OrderService.Services;
 using ProductServiceGRPC;
+using OrderService.Utilities;
 
 namespace OrderService.Repositories
 {
@@ -104,7 +105,7 @@ namespace OrderService.Repositories
 
             await connection.OpenAsync(cancellationToken);
 
-            OutputOrder? order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
+            OutputOrder order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
 
             if (order == null)
             {

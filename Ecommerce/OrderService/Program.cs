@@ -1,45 +1,60 @@
-using System.Data;
 using FluentMigrator.Runner;
-using Npgsql;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using OrderService.Migrations;
+using OrderService.Migrations.FirstShardDB;
+using OrderService.Migrations.NoShardDB;
+using OrderService.Migrations.SecondShardDB;
+using OrderService.Models;
 using OrderService.Repositories;
 using OrderService.Services;
+using OrderService.Utilities.Factories;
 using OrderService.Validators;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var shards = builder.Configuration.GetSection("Shards").Get<List<Shard>>();
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+Console.WriteLine(shards.IsNullOrEmpty());
+Console.WriteLine($"реяр: {shards[0].Buckets.Length}");
+Console.WriteLine($"реяр: {shards[1].ConnectionString}");
+
+builder.Host.UseSerilog();
+builder.Services.AddSingleton<ShardConnectionFactory>();
+builder.Services.AddSingleton<ShardFactory>(serviceProvider =>
+{
+    return new ShardFactory(shards);
+});
 builder.Services.AddGrpcClient<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>(productServiceadress, options => { options.Address = new Uri(productServiceadress); });
-builder.Services.AddScoped<IOrderRepository, OrderRepository>(serviceProvider =>
+builder.Services.AddScoped<IOrderRepository, ShardOrderRepository>(serviceProvider =>
 {
-    var tempConnectionString = connectionString;
     var productServiceClient = serviceProvider.GetRequiredService<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>();
+    var shardConnectionFactory = serviceProvider.GetRequiredService<ShardConnectionFactory>();
 
-    return new OrderRepository(connectionString, productServiceClient);
+    return new ShardOrderRepository(shardConnectionFactory, productServiceClient);
 });
-
-builder.Services.AddScoped<IDbConnection>(_ =>
-{
-    return new NpgsqlConnection(connectionString);
-});
-
 builder.Services.AddScoped<OrderValidator>();
-
+builder.Services.AddGrpc();
 builder.Services.AddFluentMigratorCore()
     .ConfigureRunner(rb => rb
         .AddPostgres()
-        .WithGlobalConnectionString(builder.Configuration.GetConnectionString("DefaultConnection"))
-        .ScanIn(typeof(InitialMigrationForOrders).Assembly).For.Migrations());
-builder.Services.AddGrpc();
+        .WithGlobalConnectionString(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
 app.MapGrpcService<OrderGRPCService>();
-using (var scope = app.Services.CreateScope())
-{
-    var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-    runner.MigrateUp();
-}
+
+CustomMigrationRunner runner = new CustomMigrationRunner(shards);
+
+runner.RunMigrations(defaultConnectionString, typeof(NoShardMigration).Assembly);
+runner.RunMigrations(shards[0].ConnectionString, typeof(FirstShardInitialMigration).Assembly);
+runner.RunMigrations(shards[1].ConnectionString, typeof(SecondShardInitialMigration).Assembly);
 
 app.Run();

@@ -150,12 +150,12 @@ namespace ProductService.Repositories
 
             try
             {
-                string? updateStatus = await connection.QuerySingleOrDefaultAsync<string?>(sqlString, productWithId);
+                string updateStatus = await connection.QuerySingleOrDefaultAsync<string>(sqlString, productWithId);
 
                 if (updateStatus == "SUCCESS")
                 {
                     result.Status = Models.Status.Success;
-                    result.Message = "Продукт успешно добавлен!";
+                    result.Message = "Продукт успешно обновлен!";
 
                     return result;
                 }

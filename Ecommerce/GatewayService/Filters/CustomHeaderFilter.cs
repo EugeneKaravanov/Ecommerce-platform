@@ -11,7 +11,7 @@ namespace GatewayService.Filters
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
-            context.HttpContext.Response.Headers.Add("X-Developer-Name", "YourName");
+            context.HttpContext.Response.Headers.Append("X-Developer-Name", "YourName");
         }
     }
 }
