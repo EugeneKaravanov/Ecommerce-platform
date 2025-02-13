@@ -8,6 +8,9 @@ using OperationStatusResponse = OrderServiceGRPC.OperationStatusResponse;
 using ProductServiceGRPC;
 using OrderService.Validators;
 using OrderService.Utilities;
+using System.Threading;
+using MassTransit;
+using OrderService.Models.Kafka.KafkaMessages;
 
 namespace OrderService.Services
 {
@@ -15,30 +18,24 @@ namespace OrderService.Services
     {
         private readonly IOrderRepository _repository;
         private readonly OrderValidator _validator;
+        private readonly ITopicProducer<OrderCreated> _producer;
 
-        public OrderGRPCService(IOrderRepository repository, OrderValidator validator)
+        public OrderGRPCService(IOrderRepository repository, OrderValidator validator, ITopicProducer<OrderCreated> producer)
         {
             _repository = repository;
             _validator = validator;
+            _producer = producer;
         }
 
         public override async Task<OrderServiceGRPC.OperationStatusResponse> CreateOrder(CreateOrderRequest request, ServerCallContext context)
         {
             OperationStatusResponse response = new();
-            InputOrder inputOrder = Mapper.TransferCreateOrderRequestToInputOrder(request);
+            OrderCreated orderCreated = Mapper.TransferCreateOrderRequestToOrderCreated(request);
 
-            if(_validator.Validate(inputOrder).IsValid)
-            {
-                Result result = await _repository.CreateOrderAsync(inputOrder);
+            await _producer.Produce(orderCreated, context.CancellationToken);
 
-                response.Status = Mapper.TransferResultStatusToResponseStatus(result.Status);
-                response.Message = result.Message;
-
-                return response;
-            }
-
-            response.Status = OrderServiceGRPC.Status.Failure;
-            response.Message = "Заказ не прошел валидацию!";
+            response.Status = Mapper.TransferResultStatusToResponseStatus(Models.Status.Success);
+            response.Message = "Заказ принят в обработку!";
 
             return response;
         }

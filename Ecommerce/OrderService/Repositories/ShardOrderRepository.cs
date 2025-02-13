@@ -5,7 +5,9 @@ using OrderService.Services;
 using OrderService.Utilities.Factories;
 using ProductServiceGRPC;
 using OrderService.Utilities;
-using Serilog;
+using MassTransit;
+using OrderService.Models.Kafka.KafkaMessages;
+using OrderService.Models.Kafka.KafkaDto;
 
 namespace OrderService.Repositories
 {
@@ -15,33 +17,23 @@ namespace OrderService.Repositories
         private readonly ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient _productServiceClient;
         private readonly int _customerIdGlobalIndexBucket = 2;
         private readonly Random _random = new Random();
+        private readonly ITopicProducer<OrderCreated> _producer;
 
-        public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient)
+        public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient, ITopicProducer<OrderCreated> producer)
         {
             _shardConnectionFactory = shardConnectionFactory;
             _productServiceClient = productServiceClient;
+            _producer = producer;
         }
 
-        public async Task<Result> CreateOrderAsync(InputOrder order, CancellationToken cancellationToken = default)
+        public async Task<Result> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
         {
             Result result = new();
-            TakeProductsRequest request = Mapper.TransferListInputOrderItemToTakeProductsRequest(order.OrderItems);
-            TakeProductsResponse response = await _productServiceClient.TakeProductsAsync(request, cancellationToken: cancellationToken);
-
-            if (response.ResultCase == TakeProductsResponse.ResultOneofCase.NotReceived)
-            {
-                result.Status = Models.Status.Failure;
-                result.Message = response.NotReceived.Message;
-
-                return result;
-            }
-
-            int bucketId =  _random.Next(0, _shardConnectionFactory.BucketsCount);
-            List<OutputOrderItem> orderItems = Mapper.TransferTakeProductResponseToListOutputOrderItem(response);
+            int bucketId = _random.Next(0, _shardConnectionFactory.BucketsCount);
 
             decimal totalAmount = 0;
 
-            foreach (OutputOrderItem item in orderItems)
+            foreach (OutputOrderItemKafkaDto item in productsReserved.OrderProducts)
                 totalAmount += item.UnitPrice * item.Quantity;
 
             string sqlStringToInsertAndGetNewOrderId = @$"SELECT NEXTVAL('Bucket{bucketId}.IdCounter');";
@@ -59,7 +51,7 @@ namespace OrderService.Repositories
                                                                 VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)";
 
             await bucketConnection.OpenAsync(cancellationToken);
-            
+
             using (var transaction = await bucketConnection.BeginTransactionAsync())
             {
                 try
@@ -67,12 +59,12 @@ namespace OrderService.Repositories
                     await bucketConnection.ExecuteAsync(sqlStringForInsertOrderInOrders, new
                     {
                         Id = id,
-                        CustomerId = order.CustomerId,
+                        CustomerId = productsReserved.CustomerId,
                         Orderdate = DateTime.Now,
                         Totalamount = totalAmount,
                     });
 
-                    foreach (var item in orderItems)
+                    foreach (var item in productsReserved.OrderProducts)
                         await bucketConnection.ExecuteAsync(sqlStringForInsertOrderItemInOrderItems, new
                         {
                             OrderId = id,
@@ -86,7 +78,6 @@ namespace OrderService.Repositories
                 catch
                 {
                     await transaction.RollbackAsync();
-                    //Здесь когда-нибудь должен появиться логгер
 
                     throw;
                 }
@@ -100,7 +91,7 @@ namespace OrderService.Repositories
             await customerIdGlobalIndexConnection.ExecuteAsync(sqlStringToInsertInCustomerIdGlobalIndex, new
             {
                 Id = id,
-                CustomerId = order.CustomerId,
+                CustomerId = productsReserved.CustomerId,
             });
 
             result.Status = Models.Status.Success;

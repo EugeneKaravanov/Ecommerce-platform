@@ -4,6 +4,9 @@ using OrderService.Models;
 using OrderService.Services;
 using ProductServiceGRPC;
 using OrderService.Utilities;
+using MassTransit;
+using OrderService.Models.Kafka.KafkaMessages;
+using MassTransit.Transports;
 
 namespace OrderService.Repositories
 {
@@ -11,66 +14,66 @@ namespace OrderService.Repositories
     {
         private readonly string _сonnectionString;
         private readonly ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient _productServiceClient;
+        private readonly IBus _bus;
 
-        public OrderRepository(string сonnectionString, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient)
+        public OrderRepository(string сonnectionString, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient, IBus bus)
         {
             _сonnectionString = сonnectionString;
             _productServiceClient = productServiceClient;
+            _bus = bus;
         }
 
-        public async Task<Result> CreateOrderAsync(InputOrder order, CancellationToken cancellationToken = default)
+        public async Task<Result> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
         {
             Result result = new();
-            TakeProductsRequest request = Mapper.TransferListInputOrderItemToTakeProductsRequest(order.OrderItems);
-            TakeProductsResponse response = await _productServiceClient.TakeProductsAsync(request, cancellationToken: cancellationToken);
 
-            if (response.ResultCase == TakeProductsResponse.ResultOneofCase.NotReceived)
-            {
-                result.Status = Models.Status.Failure;
-                result.Message = response.NotReceived.Message;
+            //if (response.ResultCase == TakeProductsResponse.ResultOneofCase.NotReceived)
+            //{
+            //    result.Status = Models.Status.Failure;
+            //    result.Message = response.NotReceived.Message;
 
-                return result;
-            }
+            //    return result;
+            //}
 
-            List<OutputOrderItem> orderItems = Mapper.TransferTakeProductResponseToListOutputOrderItem(response);
-            decimal totalAmount = 0;
+            //List<OutputOrderItem> orderItems = Mapper.TransferTakeProductResponseToListOutputOrderItem(response);
+            //decimal totalAmount = 0;
 
-            foreach (OutputOrderItem item in orderItems)
-                totalAmount += item.UnitPrice * item.Quantity;
+            //foreach (OutputOrderItem item in orderItems)
+            //    totalAmount += item.UnitPrice * item.Quantity;
 
-            string sqlStrinForInsertOrderInOrders = @"WITH insert_result AS 
-                                                    (
-                                                        INSERT INTO Orders (customerid, orderdate, totalamount)
-                                                        VALUES (@Customerid, @Orderdate, @Totalamount)
-                                                        RETURNING id
-                                                    )
-                                                    SELECT id FROM insert_result";
+            //string sqlStrinForInsertOrderInOrders = @"WITH insert_result AS 
+            //                                        (
+            //                                            INSERT INTO Orders (customerid, orderdate, totalamount)
+            //                                            VALUES (@Customerid, @Orderdate, @Totalamount)
+            //                                            RETURNING id
+            //                                        )
+            //                                        SELECT id FROM insert_result";
 
-            string sqlStringForInsertOrderItemInOrderItems = @"INSERT INTO OrderItems (orderid, productid, quantity, unitprice)
-                                                                VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)";
+            //string sqlStringForInsertOrderItemInOrderItems = @"INSERT INTO OrderItems (orderid, productid, quantity, unitprice)
+            //                                                    VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)";
 
             await using var connection = new NpgsqlConnection(_сonnectionString);
 
-            await connection.OpenAsync();
+            //await connection.OpenAsync();
 
-            int orderId = await connection.QuerySingleAsync<int>(sqlStrinForInsertOrderInOrders, new
-            {
-                CustomerId = order.CustomerId,
-                Orderdate = DateTime.Now,
-                Totalamount = totalAmount,
-            });
+            //int orderId = await connection.QuerySingleAsync<int>(sqlStrinForInsertOrderInOrders, new
+            //{
+            //    CustomerId = order.CustomerId,
+            //    Orderdate = DateTime.Now,
+            //    Totalamount = totalAmount,
+            //});
 
-            foreach (var item in orderItems)
-                await connection.ExecuteAsync(sqlStringForInsertOrderItemInOrderItems, new
-                {
-                    OrderId = orderId,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice
-                });
+            //foreach (var item in orderItems)
+            //    await connection.ExecuteAsync(sqlStringForInsertOrderItemInOrderItems, new
+            //    {
+            //        OrderId = orderId,
+            //        ProductId = item.ProductId,
+            //        Quantity = item.Quantity,
+            //        UnitPrice = item.UnitPrice
+            //    });
 
-            result.Status = Models.Status.Success;
-            result.Message = "Заказ успешно сформирован!";
+            //result.Status = Models.Status.Success;
+            //result.Message = "Заказ успешно сформирован!";
 
             return result;
         }

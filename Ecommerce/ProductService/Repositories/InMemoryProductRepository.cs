@@ -2,6 +2,7 @@
 using ProductService.Models;
 using ProductService.Utilities;
 using System.Collections.Concurrent;
+using ProductService.Models.Kafka.KafkaMessages;
 
 namespace ProductService.Repositories
 {
@@ -166,7 +167,7 @@ namespace ProductService.Repositories
             }
         }
 
-        public Task<ResultWithValue<List<OutputOrderProduct>>> TakeProducts(TakeProductsRequest request, CancellationToken cancellationToken = default)
+        public Task<ResultWithValue<List<OutputOrderProduct>>> TakeProducts(OrderCreated order, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

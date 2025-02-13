@@ -8,6 +8,8 @@ using System.ComponentModel;
 using System.Collections.Specialized;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using System.Collections.Generic;
+using ProductService.Models.Kafka.KafkaMessages;
+using ProductService.Models.Kafka.KafkaDto;
 
 namespace ProductService.Repositories
 {
@@ -209,10 +211,9 @@ namespace ProductService.Repositories
             }
         }
 
-        public async Task<ResultWithValue<List<OutputOrderProduct>>> TakeProducts(TakeProductsRequest request, CancellationToken cancellationToken = default)
+        public async Task<ResultWithValue<List<OutputOrderProduct>>> TakeProducts(OrderCreated order, CancellationToken cancellationToken = default)
         {
             ResultWithValue<List<OutputOrderProduct>> result = new();
-            List<InputOrderProduct> takingProducts = Mapper.TransferTakeProductsRequestToIncomingOrderProductList(request);
             result.Value = new List<OutputOrderProduct>();
             await using var connection = new NpgsqlConnection(_connectionString);
             string sqlStringForGetProductAndBlockString = @"SELECT * FROM Products
@@ -226,7 +227,7 @@ namespace ProductService.Repositories
 
             using var transaction = await connection.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
 
-            foreach (InputOrderProduct product in takingProducts)
+            foreach (InputOrderItemKafkaDto product in order.OrderProducts)
             {
                 ProductWithId productWithId = await connection.QuerySingleOrDefaultAsync<ProductWithId>(sqlStringForGetProductAndBlockString, new { Id = product.ProductId });
 

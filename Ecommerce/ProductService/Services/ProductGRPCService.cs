@@ -111,28 +111,9 @@ namespace ProductService.Services
             return response;
         }
 
-        public override async Task<TakeProductsResponse> TakeProducts(TakeProductsRequest request, ServerCallContext context)
+        public override Task<TakeProductsResponse> TakeProducts(TakeProductsRequest request, ServerCallContext context)
         {
-            TakeProductsResponse takeProductsResponse = new();
-            ResultWithValue<List<OutputOrderProduct>> result = await _productRepository.TakeProducts(request, context.CancellationToken);
-
-            if (result.Status == Models.Status.Success)
-            {
-                TakeProductsResponse.Types.ProductsReceived received = Mapper.TransferListOutputOrderProductToProductsrReceived(result.Value);
-
-                takeProductsResponse.Received = received;
-
-                return takeProductsResponse;
-            }
-            else
-            {
-                TakeProductsResponse.Types.ProductsNotReceived notReceived = new();
-
-                notReceived.Message = result.Message;
-                takeProductsResponse.NotReceived = notReceived;
-
-                return takeProductsResponse;
-            }
+            throw new NotImplementedException();
         }
     }
 }

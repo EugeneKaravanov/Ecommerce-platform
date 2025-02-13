@@ -1,4 +1,6 @@
 ﻿using OrderService.Models;
+using OrderService.Models.Kafka.KafkaDto;
+using OrderService.Models.Kafka.KafkaMessages;
 using OrderService.Utilities;
 using OrderServiceGRPC;
 using ProductServiceGRPC;
@@ -98,6 +100,42 @@ namespace OrderService.Utilities
             inputOrderItem.Quantity = inputOrderItemGRPC.Quantity;
 
             return inputOrderItem;
+        }
+
+        public static OrderCreated TransferCreateOrderRequestToOrderCreated(CreateOrderRequest createOrderRequest)
+        {
+            OrderCreated orderCreated = new();
+            
+            orderCreated.OrderProducts = new();
+            orderCreated.CustomerId = createOrderRequest.Order.CustomerId;
+
+            foreach (InputOrderItemGRPC inputOrderItemGRPC in createOrderRequest.Order.Items)
+                orderCreated.OrderProducts.Add(TransferInputOrderItemGRPCToInputOrderItemKafkaDto(inputOrderItemGRPC));
+
+            return orderCreated;
+        }
+
+        public static InputOrderItemKafkaDto TransferInputOrderItemGRPCToInputOrderItemKafkaDto(InputOrderItemGRPC inputOrderItemGRPC)
+        {
+            InputOrderItemKafkaDto inputOrderItem = new();
+
+            inputOrderItem.ProductId = inputOrderItemGRPC.ProductId;
+            inputOrderItem.Quantity = inputOrderItemGRPC.Quantity;
+
+            return inputOrderItem;
+        }
+
+
+        public static InputOrder TransferProductsReservedToInputOrder(ProductsReserved productsReserved)
+        {
+            InputOrder inputOrder = new();
+
+            //inputOrder.CustomerId = productsReserved.CustomerId;
+            //inputOrder.OrderItems = productsReserved.OrderProducts;
+
+            //foreach (OutputOrderItem = )
+
+            return inputOrder;
         }
 
         public static OrderServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)

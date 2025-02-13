@@ -4,22 +4,22 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-	  <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
-	  <PackageVersion Include="Google.Protobuf" Version="3.29.3" />
-	  <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
-	  <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.67.0" />
-	  <PackageVersion Include="Grpc.Tools" Version="2.69.0"/>
-	  <PackageVersion Include="Dapper" Version="2.1.35" />
-	  <PackageVersion Include="FluentMigrator" Version="6.2.0" />
-	  <PackageVersion Include="FluentMigrator.Runner" Version="6.2.0" />
-	  <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.0" />
-	  <PackageVersion Include="Npgsql" Version="9.0.2" />
-	  <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
-	  <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
-	  <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
-	  <PackageVersion Include="coverlet.collector" Version="6.0.4"/>
-	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-	  <PackageVersion Include="xunit" Version="2.9.3" />
-	  <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.1"/>
+    <PackageVersion Include="Confluent.Kafka" Version="2.8.0" />
+    <PackageVersion Include="MassTransit" Version="8.3.6" />
+    <PackageVersion Include="MassTransit.Kafka" Version="8.3.6" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <PackageVersion Include="Google.Protobuf" Version="3.29.3" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.67.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.69.0" />
+    <PackageVersion Include="Dapper" Version="2.1.35" />
+    <PackageVersion Include="FluentMigrator" Version="6.2.0" />
+    <PackageVersion Include="FluentMigrator.Runner" Version="6.2.0" />
+    <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageVersion Include="Npgsql" Version="9.0.2" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.1" />
   </ItemGroup>
 </Project>

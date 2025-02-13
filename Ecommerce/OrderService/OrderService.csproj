@@ -8,20 +8,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Dapper"/>
-	  <PackageReference Include="FluentMigrator"/>
-	  <PackageReference Include="FluentMigrator.Runner"/>
-	  <PackageReference Include="FluentValidation.AspNetCore"/>
-	  <PackageReference Include="Google.Protobuf"/>
-	  <PackageReference Include="Grpc.AspNetCore"/>
+	  <PackageReference Include="Confluent.Kafka" />
+	  <PackageReference Include="Dapper" />
+	  <PackageReference Include="FluentMigrator" />
+	  <PackageReference Include="FluentMigrator.Runner" />
+	  <PackageReference Include="FluentValidation.AspNetCore" />
+	  <PackageReference Include="Google.Protobuf" />
+	  <PackageReference Include="Grpc.AspNetCore" />
 	  <PackageReference Include="Grpc.Tools">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-	  <PackageReference Include="Npgsql"/>
-	  <PackageReference Include="Serilog.AspNetCore"/>
-	  <PackageReference Include="Serilog.Sinks.Console"/>
-	  <PackageReference Include="Serilog.Sinks.File"/>
+	  <PackageReference Include="MassTransit" />
+	  <PackageReference Include="MassTransit.Kafka" />
+	  <PackageReference Include="Npgsql" />
   </ItemGroup>
 
   <ItemGroup>
