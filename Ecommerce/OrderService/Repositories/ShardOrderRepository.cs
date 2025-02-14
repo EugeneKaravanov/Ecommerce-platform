@@ -8,6 +8,9 @@ using OrderService.Utilities;
 using MassTransit;
 using OrderService.Models.Kafka.KafkaMessages;
 using OrderService.Models.Kafka.KafkaDto;
+using StackExchange.Redis;
+using System.Data;
+using System.Text.Json;
 
 namespace OrderService.Repositories
 {
@@ -18,12 +21,15 @@ namespace OrderService.Repositories
         private readonly int _customerIdGlobalIndexBucket = 2;
         private readonly Random _random = new Random();
         private readonly ITopicProducer<OrderCreated> _producer;
+        private readonly RedisController _redis;
+        private readonly int _orderRedisTtlSeconds = 300;
 
-        public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient, ITopicProducer<OrderCreated> producer)
+        public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient, ITopicProducer<OrderCreated> producer, RedisController redis)
         {
             _shardConnectionFactory = shardConnectionFactory;
             _productServiceClient = productServiceClient;
             _producer = producer;
+            _redis = redis;
         }
 
         public async Task<Result> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
@@ -35,6 +41,8 @@ namespace OrderService.Repositories
 
             foreach (OutputOrderItemKafkaDto item in productsReserved.OrderProducts)
                 totalAmount += item.UnitPrice * item.Quantity;
+
+            var orderDate = DateTime.Now;
 
             string sqlStringToInsertAndGetNewOrderId = @$"SELECT NEXTVAL('Bucket{bucketId}.IdCounter');";
 
@@ -60,7 +68,7 @@ namespace OrderService.Repositories
                     {
                         Id = id,
                         CustomerId = productsReserved.CustomerId,
-                        Orderdate = DateTime.Now,
+                        Orderdate = orderDate,
                         Totalamount = totalAmount,
                     });
 
@@ -94,6 +102,9 @@ namespace OrderService.Repositories
                 CustomerId = productsReserved.CustomerId,
             });
 
+            OutputOrder order = Mapper.TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(id, productsReserved, totalAmount, orderDate);
+
+            _redis.AddOrderToCash(id, order, _orderRedisTtlSeconds);
             result.Status = Models.Status.Success;
             result.Message = "Заказ успешно сформирован!";
 
@@ -131,6 +142,14 @@ namespace OrderService.Repositories
             ResultWithValue<OutputOrder> result = new();
             int bucketId;
 
+            if(_redis.GetOrderFromCash(id, out OutputOrder order))
+            {
+                result.Status = Models.Status.Success;
+                result.Value = order;
+
+                return result;
+            }
+
             await using var connection = _shardConnectionFactory.GetConnectionByOrderId(id, out bucketId);
 
             string sqlStringForGetOrderById = $"SELECT * FROM Bucket{bucketId}.Orders WHERE id = @Id LIMIT 1";
@@ -138,7 +157,7 @@ namespace OrderService.Repositories
 
             await connection.OpenAsync(cancellationToken);
 
-            OutputOrder order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
+            order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
 
             if (order == null)
             {

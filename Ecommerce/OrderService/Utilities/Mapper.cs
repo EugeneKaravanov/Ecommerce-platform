@@ -138,6 +138,33 @@ namespace OrderService.Utilities
             return inputOrder;
         }
 
+        public static OutputOrder TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(int id, ProductsReserved productsReserved, decimal totlaAmount, DateTime dateTime)
+        {
+            OutputOrder outputOrder = new();
+            outputOrder.OrderItems = new();
+
+            outputOrder.Id = id;
+            outputOrder.CustomerId = id;
+            outputOrder.OrderDate = dateTime;
+            outputOrder.TotalAmount = totlaAmount;
+
+            foreach (OutputOrderItemKafkaDto outputOrderItemKafkaDto in productsReserved.OrderProducts)
+                outputOrder.OrderItems.Add(TransferOutputOrderItemKafkaDtoToOutputOrderItem(outputOrderItemKafkaDto));
+
+            return outputOrder;
+        }
+
+        public static OutputOrderItem TransferOutputOrderItemKafkaDtoToOutputOrderItem(OutputOrderItemKafkaDto outputOrderItemKafkaDto)
+        {
+            OutputOrderItem outputOrderItem = new();
+
+            outputOrderItem.ProductId = outputOrderItemKafkaDto.ProductId;
+            outputOrderItem.Quantity = outputOrderItemKafkaDto.Quantity;
+            outputOrderItem.UnitPrice = outputOrderItemKafkaDto.UnitPrice;
+
+            return outputOrderItem;
+        }
+
         public static OrderServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)
         {
             switch (status)

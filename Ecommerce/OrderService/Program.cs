@@ -16,6 +16,8 @@ using OrderService.Services;
 using OrderService.Services.Consumers;
 using OrderService.Utilities.Factories;
 using OrderService.Validators;
+using StackExchange.Redis;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,7 @@ var defaultConnectionString = builder.Configuration.GetConnectionString("Default
 var shards = builder.Configuration.GetSection("Shards").Get<List<Shard>>();
 var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 var kafka = builder.Configuration.GetSection("Kafka").Get<KafkaInfo>();
+var redisAdress = builder.Configuration.GetValue<string>("RedisAdress");
 
 builder.Services.AddSingleton<ShardConnectionFactory>();
 builder.Services.AddSingleton<ShardFactory>(serviceProvider =>
@@ -56,14 +59,18 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
-
 builder.Services.AddScoped<IOrderRepository, ShardOrderRepository>(serviceProvider =>
 {
     var productServiceClient = serviceProvider.GetRequiredService<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>();
     var shardConnectionFactory = serviceProvider.GetRequiredService<ShardConnectionFactory>();
     var producer = serviceProvider.GetRequiredService<ITopicProducer<OrderCreated>>();
+    var redis = serviceProvider.GetRequiredService<RedisController>();
 
-    return new ShardOrderRepository(shardConnectionFactory, productServiceClient, producer);
+    return new ShardOrderRepository(shardConnectionFactory, productServiceClient, producer, redis);
+});
+builder.Services.AddSingleton<RedisController>(serviceProvider =>
+{
+    return new RedisController(redisAdress);
 });
 
 builder.Services.AddLogging();

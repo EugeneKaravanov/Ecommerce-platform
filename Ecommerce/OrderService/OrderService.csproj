@@ -22,6 +22,7 @@
 	  <PackageReference Include="MassTransit" />
 	  <PackageReference Include="MassTransit.Kafka" />
 	  <PackageReference Include="Npgsql" />
+	  <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 
   <ItemGroup>
