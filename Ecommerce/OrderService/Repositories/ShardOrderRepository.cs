@@ -168,7 +168,9 @@ namespace OrderService.Repositories
             }
 
             var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsByOrderId, new { OrderId = order.Id });
+
             order.OrderItems = tempOrderItems.ToList();
+            _redis.AddOrderToCash(id, order, _orderRedisTtlSeconds);
             result.Status = Models.Status.Success;
             result.Value = order;
 
