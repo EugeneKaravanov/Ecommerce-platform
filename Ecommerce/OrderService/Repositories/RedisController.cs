@@ -13,7 +13,7 @@ namespace OrderService.Repositories
             _redisDb = ConnectionMultiplexer.Connect(connectionString).GetDatabase();
         }
 
-        public bool GetOrderFromCash(int id, out OutputOrder outputOrder)
+        public bool TryGetOrderFromCash(int id, out OutputOrder outputOrder, int ttl)
         {
             var jsonOrder = _redisDb.StringGet(id.ToString());
 
@@ -24,6 +24,7 @@ namespace OrderService.Repositories
             }
 
             outputOrder = JsonSerializer.Deserialize<OutputOrder>(_redisDb.StringGet(id.ToString()));
+            _redisDb.KeyExpire(id.ToString(), TimeSpan.FromSeconds(ttl));
 
             return true;
         }

@@ -141,6 +141,18 @@ namespace ProductService.Utilities
             return outputOrderItemKafkaDto;
         }
 
+        internal static Product TransferProductWithIdToProduct(ProductWithId productWithId)
+        {
+            Product product = new();
+
+            product.Name = productWithId.Name;
+            product.Description = productWithId.Description;
+            product.Price = product.Price;
+            product.Stock = product.Stock;
+
+            return product;
+        }
+
         internal static ProductServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)
         {
             switch (status)

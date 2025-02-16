@@ -9,18 +9,27 @@ using ProductService.Models.Kafka;
 using ProductService.Models.Kafka.KafkaMessages;
 using ProductService.Services.Consumers;
 using MassTransit;
-using MassTransit.KafkaIntegration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var kafka = builder.Configuration.GetSection("Kafka").Get<KafkaInfo>();
+var redisAdress = builder.Configuration.GetValue<string>("RedisAdress");
 
-builder.Services.AddSingleton<IProductRepository, ProductRepository>(_ => new (connectionString));
+builder.Services.AddSingleton<IProductRepository, ProductRepository>(serviceProvider =>
+{
+    var redis = serviceProvider.GetRequiredService<RedisController>();
+
+    return new ProductRepository(connectionString, redis);
+});
 builder.Services.AddSingleton<ProductValidator>();
 builder.Services.AddScoped<IDbConnection>(_ =>
 {
     return new NpgsqlConnection(connectionString);
+});
+builder.Services.AddSingleton<RedisController>(serviceProvider =>
+{
+    return new RedisController(redisAdress);
 });
 
 builder.Services.AddFluentMigratorCore()

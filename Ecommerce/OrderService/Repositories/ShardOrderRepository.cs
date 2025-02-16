@@ -142,7 +142,7 @@ namespace OrderService.Repositories
             ResultWithValue<OutputOrder> result = new();
             int bucketId;
 
-            if(_redis.GetOrderFromCash(id, out OutputOrder order))
+            if(_redis.TryGetOrderFromCash(id, out OutputOrder order, _orderRedisTtlSeconds))
             {
                 result.Status = Models.Status.Success;
                 result.Value = order;

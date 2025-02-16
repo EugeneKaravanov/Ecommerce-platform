@@ -3,11 +3,6 @@ using ProductService.Models;
 using Dapper;
 using Npgsql;
 using ProductService.Utilities;
-using Azure.Core;
-using System.ComponentModel;
-using System.Collections.Specialized;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using System.Collections.Generic;
 using ProductService.Models.Kafka.KafkaMessages;
 using ProductService.Models.Kafka.KafkaDto;
 
@@ -16,10 +11,13 @@ namespace ProductService.Repositories
     public class ProductRepository : IProductRepository
     {
         private readonly string _connectionString;
+        private readonly RedisController _redis;
+        private readonly int _productRedisTtlSeconds = 60;
 
-        public ProductRepository(string connectionString)
+        public ProductRepository(string connectionString, RedisController redis)
         {
             _connectionString = connectionString;
+            _redis = redis;
         }
 
         public async Task<Page<ProductWithId>> GetProductsAsync(GetProductsRequest request, CancellationToken cancellationToken = default)
@@ -72,7 +70,15 @@ namespace ProductService.Repositories
         public async Task<ResultWithValue<ProductWithId>> GetProductAsync(int id, CancellationToken cancellationToken = default)
         {
             ResultWithValue<ProductWithId> result = new();
-            ProductWithId productWithId;
+
+            if (_redis.TryGetProductFromCash(id, _productRedisTtlSeconds, out ProductWithId productWithId))
+            {
+                result.Status = Models.Status.Success;
+                result.Value = productWithId;
+
+                return result;
+            }
+
             string sqlString = "SELECT * FROM Products WHERE id = @Id LIMIT 1";
             await using var connection = new NpgsqlConnection(_connectionString);
 
@@ -83,6 +89,8 @@ namespace ProductService.Repositories
             {
                 result.Status = Models.Status.Success;
                 result.Value = productWithId;
+
+                _redis.AddProductToCash(id, Mapper.TransferProductWithIdToProduct(productWithId), _productRedisTtlSeconds);
 
                 return result;
             }
@@ -117,6 +125,8 @@ namespace ProductService.Repositories
             {
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно добавлен!";
+
+                _redis.AddProductToCash((int)insertId, product, _productRedisTtlSeconds);
 
                 return result;
             }
@@ -159,6 +169,8 @@ namespace ProductService.Repositories
                     result.Status = Models.Status.Success;
                     result.Message = "Продукт успешно обновлен!";
 
+                    _redis.TryUpdateProductInCash(id, product, _productRedisTtlSeconds);
+
                     return result;
                 }
                 else
@@ -199,6 +211,8 @@ namespace ProductService.Repositories
             {
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно удален!";
+
+                _redis.TryDeleteProductInCash(id);
 
                 return result;
             }

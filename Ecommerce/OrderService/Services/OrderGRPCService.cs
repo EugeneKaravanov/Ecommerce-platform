@@ -5,10 +5,8 @@ using OrderService.Repositories;
 using OrderService.Models;
 using static OrderServiceGRPC.OrderServiceGRPC;
 using OperationStatusResponse = OrderServiceGRPC.OperationStatusResponse;
-using ProductServiceGRPC;
 using OrderService.Validators;
 using OrderService.Utilities;
-using System.Threading;
 using MassTransit;
 using OrderService.Models.Kafka.KafkaMessages;
 
