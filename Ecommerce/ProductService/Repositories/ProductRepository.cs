@@ -272,6 +272,7 @@ namespace ProductService.Repositories
             try
             {
                 await transaction.CommitAsync(cancellationToken);
+                _redis.DecreaseStocks(result.Value, _productRedisTtlSeconds);
             }
             catch
             {

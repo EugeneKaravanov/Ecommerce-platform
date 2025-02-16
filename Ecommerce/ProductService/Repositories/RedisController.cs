@@ -89,5 +89,34 @@ namespace ProductService.Repositories
         {
             _redisDb.KeyDelete(id.ToString());
         }
+
+        public void DecreaseStocks (List<OutputOrderProduct> products, int ttl)
+        {
+            foreach (OutputOrderProduct product in products)
+            {
+                var transaction = _redisDb.CreateTransaction();
+                int currentStock;
+
+                transaction.AddCondition(Condition.KeyExists(product.ProductId.ToString()));
+                HashEntry[] productFromCash = _redisDb.HashGetAll(product.ProductId.ToString());
+
+                if (productFromCash.IsNullOrEmpty())
+                    continue;
+
+                currentStock = (int)_redisDb.HashGet(product.ProductId.ToString(), "Stock");
+                transaction.HashSetAsync(product.ProductId.ToString(), "Stock", currentStock - product.Quantity);
+
+                try
+                {
+                    transaction.Execute();
+                }
+                catch
+                {
+                    throw;
+                }
+
+                _redisDb.KeyExpire(product.ProductId.ToString(), TimeSpan.FromSeconds(ttl));
+            }
+        }
     }
 }
