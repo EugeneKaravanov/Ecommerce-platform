@@ -53,6 +53,7 @@ builder.Services.AddMassTransit(x =>
             k.TopicEndpoint<string, OrderCreated>(kafka.OrderCreatedTopic, "ProductServicesConsumerGroup", e =>
             {
                 e.ConfigureConsumer<OrderCreatedKafkaConsumer>(context);
+                e.CreateIfMissing();
             });
         });
     });

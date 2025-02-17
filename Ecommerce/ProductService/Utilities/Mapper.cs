@@ -147,8 +147,8 @@ namespace ProductService.Utilities
 
             product.Name = productWithId.Name;
             product.Description = productWithId.Description;
-            product.Price = product.Price;
-            product.Stock = product.Stock;
+            product.Price = productWithId.Price;
+            product.Stock = productWithId.Stock;
 
             return product;
         }

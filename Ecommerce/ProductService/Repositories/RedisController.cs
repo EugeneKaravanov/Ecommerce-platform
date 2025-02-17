@@ -103,7 +103,7 @@ namespace ProductService.Repositories
                 if (productFromCash.IsNullOrEmpty())
                     continue;
 
-                currentStock = (int)_redisDb.HashGet(product.ProductId.ToString(), "Stock");
+                currentStock = (int)productFromCash.FirstOrDefault(entry => entry.Name == "Stock").Value;
                 transaction.HashSetAsync(product.ProductId.ToString(), "Stock", currentStock - product.Quantity);
 
                 try

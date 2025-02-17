@@ -56,6 +56,7 @@ builder.Services.AddMassTransit(x =>
             k.TopicEndpoint<string, ProductsReserved>(kafka.ProductsReservedTopic, "ProductsReservedConsumerGroup", e =>
             {
                 e.ConfigureConsumer<ProductsReservedKafkaConsumer>(context);
+                e.CreateIfMissing();
             });
         });
     });

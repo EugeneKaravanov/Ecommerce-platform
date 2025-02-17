@@ -28,6 +28,7 @@ builder.Services.AddMassTransit(x =>
             k.TopicEndpoint<string, OrderFormed>(kafka.OrderFormedTopic, "InformerServicesConsumerGroup", e =>
             {
                 e.ConfigureConsumer<OrderFormedKafkaConsumer>(context);
+                e.CreateIfMissing();
             });
         });
     });

@@ -42,6 +42,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
       - name: Run tests
         run: dotnet test --no-build --verbosity normal --configuration Release ./Ecommerce/Ecommerce.sln
+
   gatewayservice-docker-build:
     runs-on: ubuntu-latest
     needs: build-check-and-test
@@ -67,6 +68,7 @@ jobs:
         with:
             path: gatewayservice-image.tar
             name: gatewayservice-image
+
   orderservice-docker-build:
     runs-on: ubuntu-latest
     needs: build-check-and-test
@@ -92,6 +94,7 @@ jobs:
         with:
             path: orderservice-image.tar
             name: orderservice-image
+
   productservice-docker-build:
     runs-on: ubuntu-latest
     needs: build-check-and-test
@@ -117,6 +120,7 @@ jobs:
         with:
             path: productservice-image.tar
             name: productservice-image
+
   push-docker-images:
     runs-on: ubuntu-latest
     needs: [gatewayservice-docker-build, orderservice-docker-build, productservice-docker-build]
