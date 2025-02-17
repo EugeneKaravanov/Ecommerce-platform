@@ -23,9 +23,9 @@ namespace OrderService.Repositories
             _bus = bus;
         }
 
-        public async Task<Result> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
+        public async Task<ResultWithValue<OrderFormed>> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
         {
-            Result result = new();
+            ResultWithValue<OrderFormed> result = new();
 
             //if (response.ResultCase == TakeProductsResponse.ResultOneofCase.NotReceived)
             //{

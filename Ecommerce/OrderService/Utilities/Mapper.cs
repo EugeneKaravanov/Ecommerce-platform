@@ -125,26 +125,13 @@ namespace OrderService.Utilities
             return inputOrderItem;
         }
 
-
-        public static InputOrder TransferProductsReservedToInputOrder(ProductsReserved productsReserved)
-        {
-            InputOrder inputOrder = new();
-
-            //inputOrder.CustomerId = productsReserved.CustomerId;
-            //inputOrder.OrderItems = productsReserved.OrderProducts;
-
-            //foreach (OutputOrderItem = )
-
-            return inputOrder;
-        }
-
         public static OutputOrder TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(int id, ProductsReserved productsReserved, decimal totlaAmount, DateTime dateTime)
         {
             OutputOrder outputOrder = new();
             outputOrder.OrderItems = new();
 
             outputOrder.Id = id;
-            outputOrder.CustomerId = id;
+            outputOrder.CustomerId = productsReserved.CustomerId;
             outputOrder.OrderDate = dateTime;
             outputOrder.TotalAmount = totlaAmount;
 
@@ -163,6 +150,17 @@ namespace OrderService.Utilities
             outputOrderItem.UnitPrice = outputOrderItemKafkaDto.UnitPrice;
 
             return outputOrderItem;
+        }
+
+        public static OrderFormed TransferOutputOrderToOrderFormed(OutputOrder outputOrder)
+        {
+            OrderFormed orderFormed = new();
+
+            orderFormed.Id = outputOrder.Id;
+            orderFormed.CustomerId = outputOrder.CustomerId;
+            orderFormed.TotalAmount = outputOrder.TotalAmount;
+
+            return orderFormed;
         }
 
         public static OrderServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)

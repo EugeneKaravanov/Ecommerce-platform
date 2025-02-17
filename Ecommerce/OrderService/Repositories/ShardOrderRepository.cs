@@ -32,9 +32,10 @@ namespace OrderService.Repositories
             _redis = redis;
         }
 
-        public async Task<Result> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
+        public async Task<ResultWithValue<OrderFormed>> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
         {
-            Result result = new();
+            ResultWithValue<OrderFormed> result = new();
+            result.Value = new();
             int bucketId = _random.Next(0, _shardConnectionFactory.BucketsCount);
 
             decimal totalAmount = 0;
@@ -105,6 +106,7 @@ namespace OrderService.Repositories
             OutputOrder order = Mapper.TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(id, productsReserved, totalAmount, orderDate);
 
             _redis.AddOrderToCash(id, order, _orderRedisTtlSeconds);
+            result.Value = Mapper.TransferOutputOrderToOrderFormed(order);
             result.Status = Models.Status.Success;
             result.Message = "Заказ успешно сформирован!";
 

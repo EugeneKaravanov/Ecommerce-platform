@@ -46,6 +46,7 @@ builder.Services.AddMassTransit(x =>
     x.AddRider(rider =>
     {
         rider.AddProducer<OrderCreated>(kafka.OrderCreatedTopic);
+        rider.AddProducer<OrderFormed>(kafka.OrderFormedTopic);
         rider.AddConsumer<ProductsReservedKafkaConsumer>();
 
         rider.UsingKafka((context, k) =>
