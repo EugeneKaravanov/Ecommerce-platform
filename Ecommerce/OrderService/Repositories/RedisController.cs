@@ -1,4 +1,5 @@
 ﻿using OrderService.Models;
+using OrderService.Models.Redis;
 using StackExchange.Redis;
 using System.Text.Json;
 
@@ -7,34 +8,40 @@ namespace OrderService.Repositories
     public class RedisController
     {
         private readonly IDatabase _redisDb;
+        private readonly int _ttl;
 
-        public RedisController(string connectionString)
+        public RedisController(RedisInfo redisInfo)
         {
-            _redisDb = ConnectionMultiplexer.Connect(connectionString).GetDatabase();
+            _redisDb = ConnectionMultiplexer.Connect(redisInfo.Address).GetDatabase();
+            _ttl = redisInfo.Ttl;
         }
 
-        public bool TryGetOrderFromCash(int id, out OutputOrder outputOrder, int ttl)
+        public async Task<ResultWithValue<OutputOrder>> TryGetOrderFromCash(int id)
         {
-            var jsonOrder = _redisDb.StringGet(id.ToString());
+            ResultWithValue<OutputOrder> result = new();
+            result.Value = new();
+            var jsonOrder = await _redisDb.StringGetAsync(id.ToString());
 
             if (jsonOrder.IsNullOrEmpty)
             {
-                outputOrder = null;
-                return false;
+                result.Status = Status.NotFound;
+
+                return result;
             }
 
-            outputOrder = JsonSerializer.Deserialize<OutputOrder>(_redisDb.StringGet(id.ToString()));
-            _redisDb.KeyExpire(id.ToString(), TimeSpan.FromSeconds(ttl));
+            result.Value = JsonSerializer.Deserialize<OutputOrder>(jsonOrder);
+            result.Status = Status.Success;
+            await _redisDb.KeyExpireAsync(id.ToString(), TimeSpan.FromSeconds(_ttl));
 
-            return true;
+            return result;
         }
 
-        public void AddOrderToCash(int id, OutputOrder order, int ttl)
+        public async Task AddOrderToCash(int id, OutputOrder order)
         {
             var jsonOrder = JsonSerializer.Serialize(order);
 
-            _redisDb.StringSet(id.ToString(), jsonOrder);
-            _redisDb.KeyExpire(id.ToString(), TimeSpan.FromSeconds(ttl));
+            await _redisDb.StringSetAsync(id.ToString(), jsonOrder);
+            await _redisDb.KeyExpireAsync(id.ToString(), TimeSpan.FromSeconds(_ttl));
         }
     }
 }

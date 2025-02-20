@@ -117,8 +117,8 @@ services:
         ConnectionStrings__DefaultConnection: Host=products-db;Port=5432;Database=Products-DB;Username=User;Password=password;
         Kafka__OrderCreatedTopic: OrderCreatedTopic
         Kafka__ProductsReservedTopic: ProductsReservedTopic
-        Kafka__Adress: kafka:9092
-        RedisAdress: product-service-redis:6379
+        Kafka__Address: kafka:9092
+        Redis__Address: product-service-redis:6379
     networks:
       - main-network
  
@@ -137,8 +137,8 @@ services:
         Kafka__OrderCreatedTopic: OrderCreatedTopic
         Kafka__ProductsReservedTopic: ProductsReservedTopic
         Kafka__OrderFormedTopic: OrderFormedTopic
-        Kafka__Adress: kafka:9092
-        RedisAdress: order-service-redis:6379
+        Kafka__Address: kafka:9092
+        Redis__Address: order-service-redis:6379
     networks:
       - main-network
 
@@ -151,7 +151,7 @@ services:
       - kafka
     environment:
         Kafka__OrderFormedTopic: OrderFormedTopic
-        Kafka__Adress: kafka:9092
+        Kafka__Address: kafka:9092
     networks:
       - main-network
 

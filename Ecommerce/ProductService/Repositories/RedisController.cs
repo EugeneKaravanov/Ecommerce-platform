@@ -3,53 +3,62 @@ using System.Text.Json;
 using ProductService.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.Transactions;
+using ProductService.Models.Redis;
 
 namespace ProductService.Repositories
 {
     public class RedisController
     {
         private readonly IDatabase _redisDb;
+        private readonly int _ttl;
 
-        public RedisController(string connectionString)
+        public RedisController(RedisInfo redisInfo)
         {
-            _redisDb = ConnectionMultiplexer.Connect(connectionString).GetDatabase();
+            _redisDb = ConnectionMultiplexer.Connect(redisInfo.Address).GetDatabase();
+            _ttl = redisInfo.Ttl;
         }
 
-        public bool TryGetProductFromCash(int id, int ttl, out ProductWithId product)
+        public async Task<ResultWithValue<ProductWithId>> TryGetProductFromCash(int id)
         {
-            HashEntry[] productFromCash = _redisDb.HashGetAll(id.ToString());
-            product = new();
+            ResultWithValue<ProductWithId> result = new();
+            result.Value = new();
+            HashEntry[] productFromCash = await _redisDb.HashGetAllAsync(id.ToString());
 
             if (productFromCash.IsNullOrEmpty())
-                return false;
+            {
+                result.Status = Status.NotFound;
 
-            product.Id = id;
+                return result;
+            }
+
+            result.Value.Id = id;
 
             foreach (var field in productFromCash)
             {
                 switch (field.Name)
                 {
                     case "Name":
-                        product.Name = field.Value;
+                        result.Value.Name = field.Value;
                         break;
                     case "Description":
-                        product.Description = field.Value;
+                        result.Value.Description = field.Value;
                         break;
                     case "Price":
-                        product.Price = (decimal)field.Value;
+                        result.Value.Price = (decimal)field.Value;
                         break;
                     case "Stock":
-                        product.Stock = (int)field.Value;
+                        result.Value.Stock = (int)field.Value;
                         break;
                 }
             }
 
-            _redisDb.KeyExpire(id.ToString(), TimeSpan.FromSeconds(ttl));
+            await _redisDb.KeyExpireAsync(id.ToString(), TimeSpan.FromSeconds(_ttl));
+            result.Status = Status.Success;
 
-            return true; 
+            return result;
         }
 
-        public void AddProductToCash(int id, Product product, int ttl)
+        public async Task AddProductToCash(int id, Product product)
         {
             HashEntry[] addingProduct = new HashEntry[]
             {
@@ -59,38 +68,32 @@ namespace ProductService.Repositories
                 new HashEntry("Stock", product.Stock)
             };
 
-            _redisDb.HashSet(id.ToString(), addingProduct);
-            _redisDb.KeyExpire(id.ToString(), TimeSpan.FromSeconds(ttl));
+            await _redisDb.HashSetAsync(id.ToString(), addingProduct);
+            await _redisDb.KeyExpireAsync(id.ToString(), TimeSpan.FromSeconds(_ttl));
         }
 
-        public void TryUpdateProductInCash(int id, Product newProduct, int ttl)
+        public async Task TryUpdateProductInCash(int id, Product newProduct)
         {
             var transaction = _redisDb.CreateTransaction();
 
             transaction.AddCondition(Condition.KeyExists(id.ToString()));
-            transaction.HashSetAsync(id.ToString(), "Name", newProduct.Name);
-            transaction.HashSetAsync(id.ToString(), "Description", newProduct.Description);
-            transaction.HashSetAsync(id.ToString(), "Price", newProduct.Price.ToString());
-            transaction.HashSetAsync(id.ToString(), "Stock", newProduct.Stock);
 
-            try
-            {
-                transaction.Execute();
-            }
-            catch
-            {
-                throw;
-            }
+            var transactionTask = transaction.HashSetAsync(id.ToString(), "Name", newProduct.Name);
 
-            _redisDb.KeyExpire(id.ToString(), TimeSpan.FromSeconds(ttl));
+            transactionTask = transaction.HashSetAsync(id.ToString(), "Description", newProduct.Description);
+            transactionTask = transaction.HashSetAsync(id.ToString(), "Price", newProduct.Price.ToString());
+            transactionTask = transaction.HashSetAsync(id.ToString(), "Stock", newProduct.Stock);
+            await transaction.ExecuteAsync();
+
+            await _redisDb.KeyExpireAsync(id.ToString(), TimeSpan.FromSeconds(_ttl));
         }
 
-        public void TryDeleteProductInCash(int id)
+        public async Task TryDeleteProductInCash(int id)
         {
-            _redisDb.KeyDelete(id.ToString());
+            await _redisDb.KeyDeleteAsync(id.ToString());
         }
 
-        public void DecreaseStocks (List<OutputOrderProduct> products, int ttl)
+        public async Task DecreaseStocks (List<OutputOrderProduct> products)
         {
             foreach (OutputOrderProduct product in products)
             {
@@ -98,24 +101,17 @@ namespace ProductService.Repositories
                 int currentStock;
 
                 transaction.AddCondition(Condition.KeyExists(product.ProductId.ToString()));
-                HashEntry[] productFromCash = _redisDb.HashGetAll(product.ProductId.ToString());
+                HashEntry[] productFromCash = await _redisDb.HashGetAllAsync(product.ProductId.ToString());
 
                 if (productFromCash.IsNullOrEmpty())
                     continue;
 
                 currentStock = (int)productFromCash.FirstOrDefault(entry => entry.Name == "Stock").Value;
-                transaction.HashSetAsync(product.ProductId.ToString(), "Stock", currentStock - product.Quantity);
 
-                try
-                {
-                    transaction.Execute();
-                }
-                catch
-                {
-                    throw;
-                }
+                var transactionTask = transaction.HashSetAsync(product.ProductId.ToString(), "Stock", currentStock - product.Quantity);
 
-                _redisDb.KeyExpire(product.ProductId.ToString(), TimeSpan.FromSeconds(ttl));
+                await transaction.ExecuteAsync();
+                await _redisDb.KeyExpireAsync(product.ProductId.ToString(), TimeSpan.FromSeconds(_ttl));
             }
         }
     }

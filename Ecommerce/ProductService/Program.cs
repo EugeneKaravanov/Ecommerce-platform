@@ -9,12 +9,13 @@ using ProductService.Models.Kafka;
 using ProductService.Models.Kafka.KafkaMessages;
 using ProductService.Services.Consumers;
 using MassTransit;
+using ProductService.Models.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var kafka = builder.Configuration.GetSection("Kafka").Get<KafkaInfo>();
-var redisAdress = builder.Configuration.GetValue<string>("RedisAdress");
+var redis = builder.Configuration.GetSection("Redis").Get<RedisInfo>();
 
 builder.Services.AddSingleton<IProductRepository, ProductRepository>(serviceProvider =>
 {
@@ -29,7 +30,7 @@ builder.Services.AddScoped<IDbConnection>(_ =>
 });
 builder.Services.AddSingleton<RedisController>(serviceProvider =>
 {
-    return new RedisController(redisAdress);
+    return new RedisController(redis);
 });
 
 builder.Services.AddFluentMigratorCore()
@@ -48,7 +49,7 @@ builder.Services.AddMassTransit(x =>
 
         rider.UsingKafka((context, k) =>
         {
-            k.Host(kafka.Adress);
+            k.Host(kafka.Address);
 
             k.TopicEndpoint<string, OrderCreated>(kafka.OrderCreatedTopic, "ProductServicesConsumerGroup", e =>
             {

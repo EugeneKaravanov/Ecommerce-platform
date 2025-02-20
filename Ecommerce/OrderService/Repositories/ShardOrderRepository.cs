@@ -22,7 +22,6 @@ namespace OrderService.Repositories
         private readonly Random _random = new Random();
         private readonly ITopicProducer<OrderCreated> _producer;
         private readonly RedisController _redis;
-        private readonly int _orderRedisTtlSeconds = 300;
 
         public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient, ITopicProducer<OrderCreated> producer, RedisController redis)
         {
@@ -105,7 +104,7 @@ namespace OrderService.Repositories
 
             OutputOrder order = Mapper.TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(id, productsReserved, totalAmount, orderDate);
 
-            _redis.AddOrderToCash(id, order, _orderRedisTtlSeconds);
+            await _redis.AddOrderToCash(id, order);
             result.Value = Mapper.TransferOutputOrderToOrderFormed(order);
             result.Status = Models.Status.Success;
             result.Message = "Заказ успешно сформирован!";
@@ -142,12 +141,14 @@ namespace OrderService.Repositories
         public async Task<ResultWithValue<OutputOrder>> GetOrderAsync(int id, CancellationToken cancellationToken = default)
         {
             ResultWithValue<OutputOrder> result = new();
+            ResultWithValue<OutputOrder> redisResult = await _redis.TryGetOrderFromCash(id);
+            OutputOrder order = new();
             int bucketId;
 
-            if(_redis.TryGetOrderFromCash(id, out OutputOrder order, _orderRedisTtlSeconds))
+            if (redisResult.Status == Models.Status.Success)
             {
                 result.Status = Models.Status.Success;
-                result.Value = order;
+                result.Value = redisResult.Value;
 
                 return result;
             }
@@ -172,7 +173,7 @@ namespace OrderService.Repositories
             var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsByOrderId, new { OrderId = order.Id });
 
             order.OrderItems = tempOrderItems.ToList();
-            _redis.AddOrderToCash(id, order, _orderRedisTtlSeconds);
+            await _redis.AddOrderToCash(id, order);
             result.Status = Models.Status.Success;
             result.Value = order;
 

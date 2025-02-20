@@ -26,54 +26,7 @@ namespace OrderService.Repositories
         public async Task<ResultWithValue<OrderFormed>> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
         {
             ResultWithValue<OrderFormed> result = new();
-
-            //if (response.ResultCase == TakeProductsResponse.ResultOneofCase.NotReceived)
-            //{
-            //    result.Status = Models.Status.Failure;
-            //    result.Message = response.NotReceived.Message;
-
-            //    return result;
-            //}
-
-            //List<OutputOrderItem> orderItems = Mapper.TransferTakeProductResponseToListOutputOrderItem(response);
-            //decimal totalAmount = 0;
-
-            //foreach (OutputOrderItem item in orderItems)
-            //    totalAmount += item.UnitPrice * item.Quantity;
-
-            //string sqlStrinForInsertOrderInOrders = @"WITH insert_result AS 
-            //                                        (
-            //                                            INSERT INTO Orders (customerid, orderdate, totalamount)
-            //                                            VALUES (@Customerid, @Orderdate, @Totalamount)
-            //                                            RETURNING id
-            //                                        )
-            //                                        SELECT id FROM insert_result";
-
-            //string sqlStringForInsertOrderItemInOrderItems = @"INSERT INTO OrderItems (orderid, productid, quantity, unitprice)
-            //                                                    VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)";
-
             await using var connection = new NpgsqlConnection(_сonnectionString);
-
-            //await connection.OpenAsync();
-
-            //int orderId = await connection.QuerySingleAsync<int>(sqlStrinForInsertOrderInOrders, new
-            //{
-            //    CustomerId = order.CustomerId,
-            //    Orderdate = DateTime.Now,
-            //    Totalamount = totalAmount,
-            //});
-
-            //foreach (var item in orderItems)
-            //    await connection.ExecuteAsync(sqlStringForInsertOrderItemInOrderItems, new
-            //    {
-            //        OrderId = orderId,
-            //        ProductId = item.ProductId,
-            //        Quantity = item.Quantity,
-            //        UnitPrice = item.UnitPrice
-            //    });
-
-            //result.Status = Models.Status.Success;
-            //result.Message = "Заказ успешно сформирован!";
 
             return result;
         }

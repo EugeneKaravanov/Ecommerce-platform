@@ -23,7 +23,7 @@ builder.Services.AddMassTransit(x =>
 
         rider.UsingKafka((context, k) =>
         {
-            k.Host(kafka.Adress);
+            k.Host(kafka.Address);
 
             k.TopicEndpoint<string, OrderFormed>(kafka.OrderFormedTopic, "InformerServicesConsumerGroup", e =>
             {

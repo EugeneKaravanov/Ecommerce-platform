@@ -5,6 +5,6 @@
         public string OrderCreatedTopic { get; set; }
         public string ProductsReservedTopic { get; set; }
         public string OrderFormedTopic { get; set; }
-        public string Adress { get; set; }
+        public string Address { get; set; }
     }
 }

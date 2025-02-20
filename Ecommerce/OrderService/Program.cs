@@ -11,28 +11,27 @@ using OrderService.Migrations.SecondShardDB;
 using OrderService.Models;
 using OrderService.Models.Kafka;
 using OrderService.Models.Kafka.KafkaMessages;
+using OrderService.Models.Redis;
 using OrderService.Repositories;
 using OrderService.Services;
 using OrderService.Services.Consumers;
 using OrderService.Utilities.Factories;
 using OrderService.Validators;
-using StackExchange.Redis;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var shards = builder.Configuration.GetSection("Shards").Get<List<Shard>>();
-var productServiceadress = builder.Configuration.GetValue<string>("ProductServiceAddress");
+var productServiceAddress = builder.Configuration.GetValue<string>("ProductServiceAddress");
 var kafka = builder.Configuration.GetSection("Kafka").Get<KafkaInfo>();
-var redisAdress = builder.Configuration.GetValue<string>("RedisAdress");
+var redis = builder.Configuration.GetSection("Redis").Get<RedisInfo>();
 
 builder.Services.AddSingleton<ShardConnectionFactory>();
 builder.Services.AddSingleton<ShardFactory>(serviceProvider =>
 {
     return new ShardFactory(shards);
 });
-builder.Services.AddGrpcClient<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>(productServiceadress, options => { options.Address = new Uri(productServiceadress); });
+builder.Services.AddGrpcClient<ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient>(productServiceAddress, options => { options.Address = new Uri(productServiceAddress); });
 builder.Services.AddScoped<OrderValidator>();
 builder.Services.AddGrpc();
 builder.Services.AddFluentMigratorCore()
@@ -51,7 +50,7 @@ builder.Services.AddMassTransit(x =>
 
         rider.UsingKafka((context, k) =>
         {
-            k.Host(kafka.Adress);
+            k.Host(kafka.Address);
 
             k.TopicEndpoint<string, ProductsReserved>(kafka.ProductsReservedTopic, "ProductsReservedConsumerGroup", e =>
             {
@@ -72,7 +71,7 @@ builder.Services.AddScoped<IOrderRepository, ShardOrderRepository>(serviceProvid
 });
 builder.Services.AddSingleton<RedisController>(serviceProvider =>
 {
-    return new RedisController(redisAdress);
+    return new RedisController(redis);
 });
 
 builder.Services.AddLogging();

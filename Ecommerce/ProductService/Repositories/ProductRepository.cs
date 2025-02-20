@@ -12,7 +12,6 @@ namespace ProductService.Repositories
     {
         private readonly string _connectionString;
         private readonly RedisController _redis;
-        private readonly int _productRedisTtlSeconds = 60;
 
         public ProductRepository(string connectionString, RedisController redis)
         {
@@ -70,11 +69,13 @@ namespace ProductService.Repositories
         public async Task<ResultWithValue<ProductWithId>> GetProductAsync(int id, CancellationToken cancellationToken = default)
         {
             ResultWithValue<ProductWithId> result = new();
+            ResultWithValue<ProductWithId> redisResult = await _redis.TryGetProductFromCash(id);
+            ProductWithId product = new();
 
-            if (_redis.TryGetProductFromCash(id, _productRedisTtlSeconds, out ProductWithId productWithId))
+            if (redisResult.Status == Models.Status.Success)
             {
                 result.Status = Models.Status.Success;
-                result.Value = productWithId;
+                result.Value = redisResult.Value;
 
                 return result;
             }
@@ -83,14 +84,14 @@ namespace ProductService.Repositories
             await using var connection = new NpgsqlConnection(_connectionString);
 
             await connection.OpenAsync(cancellationToken);
-            productWithId = await connection.QuerySingleOrDefaultAsync<ProductWithId>(sqlString, new {Id = id});
+            product = await connection.QuerySingleOrDefaultAsync<ProductWithId>(sqlString, new {Id = id});
 
-            if (productWithId != null)
+            if (product != null)
             {
                 result.Status = Models.Status.Success;
-                result.Value = productWithId;
+                result.Value = product;
 
-                _redis.AddProductToCash(id, Mapper.TransferProductWithIdToProduct(productWithId), _productRedisTtlSeconds);
+                await _redis.AddProductToCash(id, Mapper.TransferProductWithIdToProduct(product));
 
                 return result;
             }
@@ -126,7 +127,7 @@ namespace ProductService.Repositories
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно добавлен!";
 
-                _redis.AddProductToCash((int)insertId, product, _productRedisTtlSeconds);
+                await _redis.AddProductToCash((int)insertId, product);
 
                 return result;
             }
@@ -169,7 +170,7 @@ namespace ProductService.Repositories
                     result.Status = Models.Status.Success;
                     result.Message = "Продукт успешно обновлен!";
 
-                    _redis.TryUpdateProductInCash(id, product, _productRedisTtlSeconds);
+                    await _redis.TryUpdateProductInCash(id, product);
 
                     return result;
                 }
@@ -212,7 +213,7 @@ namespace ProductService.Repositories
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно удален!";
 
-                _redis.TryDeleteProductInCash(id);
+                await _redis.TryDeleteProductInCash(id);
 
                 return result;
             }
@@ -272,7 +273,7 @@ namespace ProductService.Repositories
             try
             {
                 await transaction.CommitAsync(cancellationToken);
-                _redis.DecreaseStocks(result.Value, _productRedisTtlSeconds);
+                await _redis.DecreaseStocks(result.Value);
             }
             catch
             {
