@@ -16,7 +16,7 @@ namespace OrderService.Repositories
             _ttl = redisInfo.Ttl;
         }
 
-        public async Task<ResultWithValue<OutputOrder>> TryGetOrderFromCash(int id)
+        public async Task<ResultWithValue<OutputOrder>> TryGetOrderFromCache(int id)
         {
             ResultWithValue<OutputOrder> result = new();
             result.Value = new();
@@ -36,7 +36,7 @@ namespace OrderService.Repositories
             return result;
         }
 
-        public async Task AddOrderToCash(int id, OutputOrder order)
+        public async Task AddOrderToCache(int id, OutputOrder order)
         {
             var jsonOrder = JsonSerializer.Serialize(order);
 

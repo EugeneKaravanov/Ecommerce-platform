@@ -104,7 +104,7 @@ namespace OrderService.Repositories
 
             OutputOrder order = Mapper.TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(id, productsReserved, totalAmount, orderDate);
 
-            await _redis.AddOrderToCash(id, order);
+            await _redis.AddOrderToCache(id, order);
             result.Value = Mapper.TransferOutputOrderToOrderFormed(order);
             result.Status = Models.Status.Success;
             result.Message = "Заказ успешно сформирован!";
@@ -141,7 +141,7 @@ namespace OrderService.Repositories
         public async Task<ResultWithValue<OutputOrder>> GetOrderAsync(int id, CancellationToken cancellationToken = default)
         {
             ResultWithValue<OutputOrder> result = new();
-            ResultWithValue<OutputOrder> redisResult = await _redis.TryGetOrderFromCash(id);
+            ResultWithValue<OutputOrder> redisResult = await _redis.TryGetOrderFromCache(id);
             OutputOrder order = new();
             int bucketId;
 
@@ -173,7 +173,7 @@ namespace OrderService.Repositories
             var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsByOrderId, new { OrderId = order.Id });
 
             order.OrderItems = tempOrderItems.ToList();
-            await _redis.AddOrderToCash(id, order);
+            await _redis.AddOrderToCache(id, order);
             result.Status = Models.Status.Success;
             result.Value = order;
 

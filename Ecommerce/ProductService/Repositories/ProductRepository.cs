@@ -69,7 +69,7 @@ namespace ProductService.Repositories
         public async Task<ResultWithValue<ProductWithId>> GetProductAsync(int id, CancellationToken cancellationToken = default)
         {
             ResultWithValue<ProductWithId> result = new();
-            ResultWithValue<ProductWithId> redisResult = await _redis.TryGetProductFromCash(id);
+            ResultWithValue<ProductWithId> redisResult = await _redis.TryGetProductFromCache(id);
             ProductWithId product = new();
 
             if (redisResult.Status == Models.Status.Success)
@@ -91,7 +91,7 @@ namespace ProductService.Repositories
                 result.Status = Models.Status.Success;
                 result.Value = product;
 
-                await _redis.AddProductToCash(id, Mapper.TransferProductWithIdToProduct(product));
+                await _redis.AddProductToCache(id, Mapper.TransferProductWithIdToProduct(product));
 
                 return result;
             }
@@ -127,7 +127,7 @@ namespace ProductService.Repositories
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно добавлен!";
 
-                await _redis.AddProductToCash((int)insertId, product);
+                await _redis.AddProductToCache((int)insertId, product);
 
                 return result;
             }
@@ -170,7 +170,7 @@ namespace ProductService.Repositories
                     result.Status = Models.Status.Success;
                     result.Message = "Продукт успешно обновлен!";
 
-                    await _redis.TryUpdateProductInCash(id, product);
+                    await _redis.TryUpdateProductInCache(id, product);
 
                     return result;
                 }
@@ -213,7 +213,7 @@ namespace ProductService.Repositories
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно удален!";
 
-                await _redis.TryDeleteProductInCash(id);
+                await _redis.TryDeleteProductInCache(id);
 
                 return result;
             }
