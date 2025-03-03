@@ -4,17 +4,20 @@ using ProductService.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.Transactions;
 using ProductService.Models.Redis;
+using ProductService.Utilities.Redis;
 
 namespace ProductService.Repositories
 {
-    public class RedisController
+    public class RedisController : IDisposable
     {
         private readonly IDatabase _redisDb;
         private readonly int _ttl;
+        private readonly ConnectionMultiplexer _redis;
 
         public RedisController(RedisInfo redisInfo)
         {
-            _redisDb = ConnectionMultiplexer.Connect(redisInfo.Address).GetDatabase();
+            _redis = ConnectionMultiplexer.Connect(redisInfo.Address);
+            _redisDb = _redis.GetDatabase();
             _ttl = redisInfo.Ttl;
         }
 
@@ -44,10 +47,10 @@ namespace ProductService.Repositories
                         result.Value.Description = field.Value;
                         break;
                     case "Price":
-                        result.Value.Price = (decimal)field.Value;
+                        result.Value.Price = decimal.Parse(field.Value);
                         break;
                     case "Stock":
-                        result.Value.Stock = (int)field.Value;
+                        result.Value.Stock = int.Parse(field.Value);
                         break;
                 }
             }
@@ -75,17 +78,23 @@ namespace ProductService.Repositories
         public async Task TryUpdateProductInCache(int id, Product newProduct)
         {
             var transaction = _redisDb.CreateTransaction();
+            List<Task> transactionTasks = new();
+            bool isTransactionSuccessful;
 
             transaction.AddCondition(Condition.KeyExists(id.ToString()));
 
-            var transactionTask = transaction.HashSetAsync(id.ToString(), "Name", newProduct.Name);
-
-            transactionTask = transaction.HashSetAsync(id.ToString(), "Description", newProduct.Description);
-            transactionTask = transaction.HashSetAsync(id.ToString(), "Price", newProduct.Price.ToString());
-            transactionTask = transaction.HashSetAsync(id.ToString(), "Stock", newProduct.Stock);
-            await transaction.ExecuteAsync();
+            isTransactionSuccessful = await _redisDb.TransactAsync(commands => commands
+                .Enqueue(transaction => transaction.HashSetAsync(id.ToString(), "Name", newProduct.Name))
+                .Enqueue(transaction => transaction.HashSetAsync(id.ToString(), "Description", newProduct.Description))
+                .Enqueue(transaction => transaction.HashSetAsync(id.ToString(), "Price", newProduct.Price.ToString()))
+                .Enqueue(transaction => transaction.HashSetAsync(id.ToString(), "Stock", newProduct.Stock)));
 
             await _redisDb.KeyExpireAsync(id.ToString(), TimeSpan.FromSeconds(_ttl));
+
+            if (isTransactionSuccessful)
+            {
+                //что-то делаем
+            }
         }
 
         public async Task TryDeleteProductInCache(int id)
@@ -98,7 +107,7 @@ namespace ProductService.Repositories
             foreach (OutputOrderProduct product in products)
             {
                 var transaction = _redisDb.CreateTransaction();
-                int currentStock;
+                List<Task> transactionTasks = new();
 
                 transaction.AddCondition(Condition.KeyExists(product.ProductId.ToString()));
                 HashEntry[] productFromCache = await _redisDb.HashGetAllAsync(product.ProductId.ToString());
@@ -106,13 +115,17 @@ namespace ProductService.Repositories
                 if (productFromCache.IsNullOrEmpty())
                     continue;
 
-                currentStock = (int)productFromCache.FirstOrDefault(entry => entry.Name == "Stock").Value;
-
-                var transactionTask = transaction.HashSetAsync(product.ProductId.ToString(), "Stock", currentStock - product.Quantity);
+                transactionTasks.Add(_redisDb.HashDecrementAsync(product.ProductId.ToString(), "Stock", product.Quantity));
+                await Task.WhenAll(transactionTasks);
 
                 await transaction.ExecuteAsync();
                 await _redisDb.KeyExpireAsync(product.ProductId.ToString(), TimeSpan.FromSeconds(_ttl));
             }
+        }
+
+        public void Dispose()
+        {
+            _redis.Dispose();
         }
     }
 }
