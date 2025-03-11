@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Transactions;
 using ProductService.Models.Redis;
 using ProductService.Utilities.Redis;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 
 namespace ProductService.Repositories
 {
@@ -77,13 +78,7 @@ namespace ProductService.Repositories
 
         public async Task TryUpdateProductInCache(int id, Product newProduct)
         {
-            var transaction = _redisDb.CreateTransaction();
-            List<Task> transactionTasks = new();
-            bool isTransactionSuccessful;
-
-            transaction.AddCondition(Condition.KeyExists(id.ToString()));
-
-            isTransactionSuccessful = await _redisDb.TransactAsync(commands => commands
+            bool isTransactionSuccessful = await _redisDb.TransactAsync(commands => commands
                 .Enqueue(transaction => transaction.HashSetAsync(id.ToString(), "Name", newProduct.Name))
                 .Enqueue(transaction => transaction.HashSetAsync(id.ToString(), "Description", newProduct.Description))
                 .Enqueue(transaction => transaction.HashSetAsync(id.ToString(), "Price", newProduct.Price.ToString()))
@@ -91,9 +86,9 @@ namespace ProductService.Repositories
 
             await _redisDb.KeyExpireAsync(id.ToString(), TimeSpan.FromSeconds(_ttl));
 
-            if (isTransactionSuccessful)
+            if (isTransactionSuccessful == false)
             {
-                //что-то делаем
+                Console.WriteLine("Транзакция не замкомитилась!");
             }
         }
 
@@ -104,21 +99,17 @@ namespace ProductService.Repositories
 
         public async Task DecreaseStocks (List<OutputOrderProduct> products)
         {
+            var script = @"
+                if redis.call('EXISTS', KEYS[1]) == 1 then
+                    return redis.call('HINCRBY', KEYS[1], ARGV[1], -ARGV[2])
+                else
+                    return nil
+                end
+            ";
+
             foreach (OutputOrderProduct product in products)
             {
-                var transaction = _redisDb.CreateTransaction();
-                List<Task> transactionTasks = new();
-
-                transaction.AddCondition(Condition.KeyExists(product.ProductId.ToString()));
-                HashEntry[] productFromCache = await _redisDb.HashGetAllAsync(product.ProductId.ToString());
-
-                if (productFromCache.IsNullOrEmpty())
-                    continue;
-
-                transactionTasks.Add(_redisDb.HashDecrementAsync(product.ProductId.ToString(), "Stock", product.Quantity));
-                await Task.WhenAll(transactionTasks);
-
-                await transaction.ExecuteAsync();
+                await _redisDb.ScriptEvaluateAsync(script, new RedisKey[] { product.ProductId.ToString() }, new RedisValue[] { "Stock", product.Quantity });
                 await _redisDb.KeyExpireAsync(product.ProductId.ToString(), TimeSpan.FromSeconds(_ttl));
             }
         }
