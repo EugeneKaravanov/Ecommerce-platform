@@ -17,6 +17,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var kafka = builder.Configuration.GetSection("Kafka").Get<KafkaInfo>();
 var redis = builder.Configuration.GetSection("Redis").Get<RedisInfo>();
 
+builder.Services.AddSingleton(redis);
 builder.Services.AddSingleton<IProductRepository, ProductRepository>(serviceProvider =>
 {
     var redis = serviceProvider.GetRequiredService<RedisController>();
@@ -28,10 +29,7 @@ builder.Services.AddScoped<IDbConnection>(_ =>
 {
     return new NpgsqlConnection(connectionString);
 });
-builder.Services.AddSingleton<RedisController>(serviceProvider =>
-{
-    return new RedisController(redis);
-});
+builder.Services.AddSingleton<RedisController>();
 
 builder.Services.AddFluentMigratorCore()
     .ConfigureRunner(rb => rb

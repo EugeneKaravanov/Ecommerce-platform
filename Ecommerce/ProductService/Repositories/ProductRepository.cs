@@ -5,6 +5,7 @@ using Npgsql;
 using ProductService.Utilities;
 using ProductService.Models.Kafka.KafkaMessages;
 using ProductService.Models.Kafka.KafkaDto;
+using ProductService.Models.Redis;
 
 namespace ProductService.Repositories
 {
@@ -230,6 +231,7 @@ namespace ProductService.Repositories
         {
             ResultWithValue<List<OutputOrderProduct>> result = new();
             result.Value = new List<OutputOrderProduct>();
+            List<RedisOutputOrderProduct> redisResult = new();
             await using var connection = new NpgsqlConnection(_connectionString);
             string sqlStringForGetProductAndBlockString = @"SELECT * FROM Products
                                                            WHERE id = @Id
@@ -268,12 +270,21 @@ namespace ProductService.Repositories
 
                 await connection.ExecuteAsync(sqlStringForChangeStockProuct, new { Id = product.ProductId, Quantity = product.Quantity});
                 result.Value.Add(new OutputOrderProduct { ProductId = product.ProductId, Quantity = product.Quantity, UnitPrice = productWithId.Price });
+                redisResult.Add(new RedisOutputOrderProduct
+                {
+                    ProductId = product.ProductId,
+                    Name = productWithId.Name,
+                    Description = productWithId.Description,
+                    Quantity = product.Quantity,
+                    Stock = productWithId.Stock - product.Quantity,
+                    UnitPrice = productWithId.Price
+                });
             }
 
             try
             {
                 await transaction.CommitAsync(cancellationToken);
-                await _redis.DecreaseStocks(result.Value);
+                await _redis.DecreaseStocks(redisResult);
             }
             catch
             {

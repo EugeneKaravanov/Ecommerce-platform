@@ -2,6 +2,7 @@
 using ProductService.Models;
 using ProductService.Models.Kafka.KafkaMessages;
 using ProductService.Models.Kafka.KafkaDto;
+using ProductService.Models.Redis;
 
 namespace ProductService.Utilities
 {
@@ -149,6 +150,18 @@ namespace ProductService.Utilities
             product.Description = productWithId.Description;
             product.Price = productWithId.Price;
             product.Stock = productWithId.Stock;
+
+            return product;
+        }
+
+        internal static Product TransferRedisOutputOrderProductToProduct(RedisOutputOrderProduct redisProduct)
+        {
+            Product product = new();
+
+            product.Name = redisProduct.Name;
+            product.Description = redisProduct.Description;
+            product.Price = redisProduct.UnitPrice;
+            product.Stock = redisProduct.Stock;
 
             return product;
         }

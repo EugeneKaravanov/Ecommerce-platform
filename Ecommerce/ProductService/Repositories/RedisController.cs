@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Transactions;
 using ProductService.Models.Redis;
 using ProductService.Utilities.Redis;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using ProductService.Utilities;
 
 namespace ProductService.Repositories
 {
@@ -97,20 +97,30 @@ namespace ProductService.Repositories
             await _redisDb.KeyDeleteAsync(id.ToString());
         }
 
-        public async Task DecreaseStocks (List<OutputOrderProduct> products)
+        public async Task DecreaseStocks (List<RedisOutputOrderProduct> products)
         {
-            var script = @"
-                if redis.call('EXISTS', KEYS[1]) == 1 then
-                    return redis.call('HINCRBY', KEYS[1], ARGV[1], -ARGV[2])
-                else
-                    return nil
-                end
-            ";
+            var script = @"if redis.call('EXISTS', KEYS[1]) == 1 then
+                                if tonumber(redis.call('HGET', KEYS[1], ARGV[1])) >= tonumber(ARGV[2]) then
+                                    return redis.call('HINCRBY', KEYS[1], ARGV[1], -ARGV[2])
+                                else
+                                    return nil
+                                end
+                           else
+                                return nil
+                           end";
 
-            foreach (OutputOrderProduct product in products)
+            foreach (RedisOutputOrderProduct product in products)
             {
-                await _redisDb.ScriptEvaluateAsync(script, new RedisKey[] { product.ProductId.ToString() }, new RedisValue[] { "Stock", product.Quantity });
-                await _redisDb.KeyExpireAsync(product.ProductId.ToString(), TimeSpan.FromSeconds(_ttl));
+                var redisResult = await _redisDb.ScriptEvaluateAsync(script, new RedisKey[] { product.ProductId.ToString() }, new RedisValue[] { "Stock", product.Quantity });
+
+                if (redisResult.IsNull == false)
+                {
+                    await _redisDb.KeyExpireAsync(product.ProductId.ToString(), TimeSpan.FromSeconds(_ttl));
+
+                    continue;
+                }
+                
+                await AddProductToCache(product.ProductId, Mapper.TransferRedisOutputOrderProductToProduct(product));   
             }
         }
 
