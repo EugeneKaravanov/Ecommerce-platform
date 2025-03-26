@@ -1,5 +1,8 @@
 ﻿using ProductServiceGRPC;
 using ProductService.Models;
+using ProductService.Models.Kafka.KafkaMessages;
+using ProductService.Models.Kafka.KafkaDto;
+using ProductService.Models.Redis;
 
 namespace ProductService.Utilities
 {
@@ -111,6 +114,56 @@ namespace ProductService.Utilities
             outputTakeProductGRPC.UnitPrice = MoneyConverter.ConvertDecimalToMoney(orderProduct.UnitPrice);
 
             return outputTakeProductGRPC;
+        }
+
+        internal static ProductsReserved TransferTakeProductsResultAndOrderCreatedToProductsReserved(ResultWithValue<List<OutputOrderProduct>> result, OrderCreated orderCreated)
+        {
+            ProductsReserved productsReserved = new();
+
+            productsReserved.CustomerId = orderCreated.CustomerId;
+            productsReserved.Message = result.Message;
+            productsReserved.Status = result.Status;
+            productsReserved.OrderProducts = new();
+
+            foreach (OutputOrderProduct outputOrderProduct in result.Value)
+                productsReserved.OrderProducts.Add(TransferOutputOrderProductToOutputOrderItemKafkaDto(outputOrderProduct));
+
+            return productsReserved;
+        }
+
+        internal static OutputOrderItemKafkaDto TransferOutputOrderProductToOutputOrderItemKafkaDto(OutputOrderProduct product)
+        {
+            OutputOrderItemKafkaDto outputOrderItemKafkaDto = new();
+
+            outputOrderItemKafkaDto.ProductId = product.ProductId;
+            outputOrderItemKafkaDto.Quantity = product.Quantity;
+            outputOrderItemKafkaDto.UnitPrice = product.UnitPrice;
+
+            return outputOrderItemKafkaDto;
+        }
+
+        internal static Product TransferProductWithIdToProduct(ProductWithId productWithId)
+        {
+            Product product = new();
+
+            product.Name = productWithId.Name;
+            product.Description = productWithId.Description;
+            product.Price = productWithId.Price;
+            product.Stock = productWithId.Stock;
+
+            return product;
+        }
+
+        internal static Product TransferRedisOutputOrderProductToProduct(RedisOutputOrderProduct redisProduct)
+        {
+            Product product = new();
+
+            product.Name = redisProduct.Name;
+            product.Description = redisProduct.Description;
+            product.Price = redisProduct.UnitPrice;
+            product.Stock = redisProduct.Stock;
+
+            return product;
         }
 
         internal static ProductServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)

@@ -1,4 +1,6 @@
 ﻿using OrderService.Models;
+using OrderService.Models.Kafka.KafkaDto;
+using OrderService.Models.Kafka.KafkaMessages;
 using OrderService.Utilities;
 using OrderServiceGRPC;
 using ProductServiceGRPC;
@@ -98,6 +100,67 @@ namespace OrderService.Utilities
             inputOrderItem.Quantity = inputOrderItemGRPC.Quantity;
 
             return inputOrderItem;
+        }
+
+        public static OrderCreated TransferCreateOrderRequestToOrderCreated(CreateOrderRequest createOrderRequest)
+        {
+            OrderCreated orderCreated = new();
+            
+            orderCreated.OrderProducts = new();
+            orderCreated.CustomerId = createOrderRequest.Order.CustomerId;
+
+            foreach (InputOrderItemGRPC inputOrderItemGRPC in createOrderRequest.Order.Items)
+                orderCreated.OrderProducts.Add(TransferInputOrderItemGRPCToInputOrderItemKafkaDto(inputOrderItemGRPC));
+
+            return orderCreated;
+        }
+
+        public static InputOrderItemKafkaDto TransferInputOrderItemGRPCToInputOrderItemKafkaDto(InputOrderItemGRPC inputOrderItemGRPC)
+        {
+            InputOrderItemKafkaDto inputOrderItem = new();
+
+            inputOrderItem.ProductId = inputOrderItemGRPC.ProductId;
+            inputOrderItem.Quantity = inputOrderItemGRPC.Quantity;
+
+            return inputOrderItem;
+        }
+
+        public static OutputOrder TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(int id, ProductsReserved productsReserved, decimal totlaAmount, DateTime dateTime)
+        {
+            OutputOrder outputOrder = new();
+            outputOrder.OrderItems = new();
+
+            outputOrder.Id = id;
+            outputOrder.CustomerId = productsReserved.CustomerId;
+            outputOrder.OrderDate = dateTime;
+            outputOrder.TotalAmount = totlaAmount;
+
+            foreach (OutputOrderItemKafkaDto outputOrderItemKafkaDto in productsReserved.OrderProducts)
+                outputOrder.OrderItems.Add(TransferOutputOrderItemKafkaDtoToOutputOrderItem(outputOrderItemKafkaDto));
+
+            return outputOrder;
+        }
+
+        public static OutputOrderItem TransferOutputOrderItemKafkaDtoToOutputOrderItem(OutputOrderItemKafkaDto outputOrderItemKafkaDto)
+        {
+            OutputOrderItem outputOrderItem = new();
+
+            outputOrderItem.ProductId = outputOrderItemKafkaDto.ProductId;
+            outputOrderItem.Quantity = outputOrderItemKafkaDto.Quantity;
+            outputOrderItem.UnitPrice = outputOrderItemKafkaDto.UnitPrice;
+
+            return outputOrderItem;
+        }
+
+        public static OrderFormed TransferOutputOrderToOrderFormed(OutputOrder outputOrder)
+        {
+            OrderFormed orderFormed = new();
+
+            orderFormed.Id = outputOrder.Id;
+            orderFormed.CustomerId = outputOrder.CustomerId;
+            orderFormed.TotalAmount = outputOrder.TotalAmount;
+
+            return orderFormed;
         }
 
         public static OrderServiceGRPC.Status TransferResultStatusToResponseStatus(Models.Status status)

@@ -33,7 +33,7 @@ namespace GatewayService.Controllers
         public async Task<IActionResult> GetProduct(int id, CancellationToken cancellationToken)
         {
             GetProductRequest request = new GetProductRequest { Id = id };
-            GetProductResponse response = await _productServiceClient.GetProductAsync(request, cancellationToken: cancellationToken);
+            GetProductResponse response = await _productServiceClient.GetProductAsync(request);
 
             if (response.ResultCase == GetProductResponse.ResultOneofCase.Found)
             {

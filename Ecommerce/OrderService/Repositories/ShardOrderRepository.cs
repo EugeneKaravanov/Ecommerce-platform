@@ -5,7 +5,12 @@ using OrderService.Services;
 using OrderService.Utilities.Factories;
 using ProductServiceGRPC;
 using OrderService.Utilities;
-using Serilog;
+using MassTransit;
+using OrderService.Models.Kafka.KafkaMessages;
+using OrderService.Models.Kafka.KafkaDto;
+using StackExchange.Redis;
+using System.Data;
+using System.Text.Json;
 
 namespace OrderService.Repositories
 {
@@ -15,34 +20,29 @@ namespace OrderService.Repositories
         private readonly ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient _productServiceClient;
         private readonly int _customerIdGlobalIndexBucket = 2;
         private readonly Random _random = new Random();
+        private readonly ITopicProducer<OrderCreated> _producer;
+        private readonly RedisController _redis;
 
-        public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient)
+        public ShardOrderRepository(ShardConnectionFactory shardConnectionFactory, ProductServiceGRPC.ProductServiceGRPC.ProductServiceGRPCClient productServiceClient, ITopicProducer<OrderCreated> producer, RedisController redis)
         {
             _shardConnectionFactory = shardConnectionFactory;
             _productServiceClient = productServiceClient;
+            _producer = producer;
+            _redis = redis;
         }
 
-        public async Task<Result> CreateOrderAsync(InputOrder order, CancellationToken cancellationToken = default)
+        public async Task<ResultWithValue<OrderFormed>> CreateOrderAsync(ProductsReserved productsReserved, CancellationToken cancellationToken = default)
         {
-            Result result = new();
-            TakeProductsRequest request = Mapper.TransferListInputOrderItemToTakeProductsRequest(order.OrderItems);
-            TakeProductsResponse response = await _productServiceClient.TakeProductsAsync(request, cancellationToken: cancellationToken);
-
-            if (response.ResultCase == TakeProductsResponse.ResultOneofCase.NotReceived)
-            {
-                result.Status = Models.Status.Failure;
-                result.Message = response.NotReceived.Message;
-
-                return result;
-            }
-
-            int bucketId =  _random.Next(0, _shardConnectionFactory.BucketsCount);
-            List<OutputOrderItem> orderItems = Mapper.TransferTakeProductResponseToListOutputOrderItem(response);
+            ResultWithValue<OrderFormed> result = new();
+            result.Value = new();
+            int bucketId = _random.Next(0, _shardConnectionFactory.BucketsCount);
 
             decimal totalAmount = 0;
 
-            foreach (OutputOrderItem item in orderItems)
+            foreach (OutputOrderItemKafkaDto item in productsReserved.OrderProducts)
                 totalAmount += item.UnitPrice * item.Quantity;
+
+            var orderDate = DateTime.Now;
 
             string sqlStringToInsertAndGetNewOrderId = @$"SELECT NEXTVAL('Bucket{bucketId}.IdCounter');";
 
@@ -59,7 +59,7 @@ namespace OrderService.Repositories
                                                                 VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)";
 
             await bucketConnection.OpenAsync(cancellationToken);
-            
+
             using (var transaction = await bucketConnection.BeginTransactionAsync())
             {
                 try
@@ -67,12 +67,12 @@ namespace OrderService.Repositories
                     await bucketConnection.ExecuteAsync(sqlStringForInsertOrderInOrders, new
                     {
                         Id = id,
-                        CustomerId = order.CustomerId,
-                        Orderdate = DateTime.Now,
+                        CustomerId = productsReserved.CustomerId,
+                        Orderdate = orderDate,
                         Totalamount = totalAmount,
                     });
 
-                    foreach (var item in orderItems)
+                    foreach (var item in productsReserved.OrderProducts)
                         await bucketConnection.ExecuteAsync(sqlStringForInsertOrderItemInOrderItems, new
                         {
                             OrderId = id,
@@ -86,7 +86,6 @@ namespace OrderService.Repositories
                 catch
                 {
                     await transaction.RollbackAsync();
-                    //Здесь когда-нибудь должен появиться логгер
 
                     throw;
                 }
@@ -100,9 +99,13 @@ namespace OrderService.Repositories
             await customerIdGlobalIndexConnection.ExecuteAsync(sqlStringToInsertInCustomerIdGlobalIndex, new
             {
                 Id = id,
-                CustomerId = order.CustomerId,
+                CustomerId = productsReserved.CustomerId,
             });
 
+            OutputOrder order = Mapper.TransferIdAndProductsReservedAndTotalAmmountAndOrderDateToOutputOrder(id, productsReserved, totalAmount, orderDate);
+
+            await _redis.AddOrderToCache(id, order);
+            result.Value = Mapper.TransferOutputOrderToOrderFormed(order);
             result.Status = Models.Status.Success;
             result.Message = "Заказ успешно сформирован!";
 
@@ -138,7 +141,17 @@ namespace OrderService.Repositories
         public async Task<ResultWithValue<OutputOrder>> GetOrderAsync(int id, CancellationToken cancellationToken = default)
         {
             ResultWithValue<OutputOrder> result = new();
+            ResultWithValue<OutputOrder> redisResult = await _redis.TryGetOrderFromCache(id);
+            OutputOrder order = new();
             int bucketId;
+
+            if (redisResult.Status == Models.Status.Success)
+            {
+                result.Status = Models.Status.Success;
+                result.Value = redisResult.Value;
+
+                return result;
+            }
 
             await using var connection = _shardConnectionFactory.GetConnectionByOrderId(id, out bucketId);
 
@@ -147,7 +160,7 @@ namespace OrderService.Repositories
 
             await connection.OpenAsync(cancellationToken);
 
-            OutputOrder order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
+            order = await connection.QuerySingleOrDefaultAsync<OutputOrder>(sqlStringForGetOrderById, new { Id = id });
 
             if (order == null)
             {
@@ -158,7 +171,9 @@ namespace OrderService.Repositories
             }
 
             var tempOrderItems = await connection.QueryAsync<OutputOrderItem>(sqlStringForGetOrderItemsByOrderId, new { OrderId = order.Id });
+
             order.OrderItems = tempOrderItems.ToList();
+            await _redis.AddOrderToCache(id, order);
             result.Status = Models.Status.Success;
             result.Value = order;
 

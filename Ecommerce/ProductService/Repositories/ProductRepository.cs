@@ -3,21 +3,21 @@ using ProductService.Models;
 using Dapper;
 using Npgsql;
 using ProductService.Utilities;
-using Azure.Core;
-using System.ComponentModel;
-using System.Collections.Specialized;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using System.Collections.Generic;
+using ProductService.Models.Kafka.KafkaMessages;
+using ProductService.Models.Kafka.KafkaDto;
+using ProductService.Models.Redis;
 
 namespace ProductService.Repositories
 {
     public class ProductRepository : IProductRepository
     {
         private readonly string _connectionString;
+        private readonly RedisController _redis;
 
-        public ProductRepository(string connectionString)
+        public ProductRepository(string connectionString, RedisController redis)
         {
             _connectionString = connectionString;
+            _redis = redis;
         }
 
         public async Task<Page<ProductWithId>> GetProductsAsync(GetProductsRequest request, CancellationToken cancellationToken = default)
@@ -70,17 +70,29 @@ namespace ProductService.Repositories
         public async Task<ResultWithValue<ProductWithId>> GetProductAsync(int id, CancellationToken cancellationToken = default)
         {
             ResultWithValue<ProductWithId> result = new();
-            ProductWithId productWithId;
+            ResultWithValue<ProductWithId> redisResult = await _redis.TryGetProductFromCache(id);
+            ProductWithId product = new();
+
+            if (redisResult.Status == Models.Status.Success)
+            {
+                result.Status = Models.Status.Success;
+                result.Value = redisResult.Value;
+
+                return result;
+            }
+
             string sqlString = "SELECT * FROM Products WHERE id = @Id LIMIT 1";
             await using var connection = new NpgsqlConnection(_connectionString);
 
             await connection.OpenAsync(cancellationToken);
-            productWithId = await connection.QuerySingleOrDefaultAsync<ProductWithId>(sqlString, new {Id = id});
+            product = await connection.QuerySingleOrDefaultAsync<ProductWithId>(sqlString, new {Id = id});
 
-            if (productWithId != null)
+            if (product != null)
             {
                 result.Status = Models.Status.Success;
-                result.Value = productWithId;
+                result.Value = product;
+
+                await _redis.AddProductToCache(id, Mapper.TransferProductWithIdToProduct(product));
 
                 return result;
             }
@@ -115,6 +127,8 @@ namespace ProductService.Repositories
             {
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно добавлен!";
+
+                await _redis.AddProductToCache((int)insertId, product);
 
                 return result;
             }
@@ -157,6 +171,8 @@ namespace ProductService.Repositories
                     result.Status = Models.Status.Success;
                     result.Message = "Продукт успешно обновлен!";
 
+                    await _redis.TryUpdateProductInCache(id, product);
+
                     return result;
                 }
                 else
@@ -198,6 +214,8 @@ namespace ProductService.Repositories
                 result.Status = Models.Status.Success;
                 result.Message = "Продукт успешно удален!";
 
+                await _redis.TryDeleteProductInCache(id);
+
                 return result;
             }
             else
@@ -209,11 +227,11 @@ namespace ProductService.Repositories
             }
         }
 
-        public async Task<ResultWithValue<List<OutputOrderProduct>>> TakeProducts(TakeProductsRequest request, CancellationToken cancellationToken = default)
+        public async Task<ResultWithValue<List<OutputOrderProduct>>> TakeProducts(OrderCreated order, CancellationToken cancellationToken = default)
         {
             ResultWithValue<List<OutputOrderProduct>> result = new();
-            List<InputOrderProduct> takingProducts = Mapper.TransferTakeProductsRequestToIncomingOrderProductList(request);
             result.Value = new List<OutputOrderProduct>();
+            List<RedisOutputOrderProduct> redisResult = new();
             await using var connection = new NpgsqlConnection(_connectionString);
             string sqlStringForGetProductAndBlockString = @"SELECT * FROM Products
                                                            WHERE id = @Id
@@ -226,7 +244,7 @@ namespace ProductService.Repositories
 
             using var transaction = await connection.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
 
-            foreach (InputOrderProduct product in takingProducts)
+            foreach (InputOrderItemKafkaDto product in order.OrderProducts)
             {
                 ProductWithId productWithId = await connection.QuerySingleOrDefaultAsync<ProductWithId>(sqlStringForGetProductAndBlockString, new { Id = product.ProductId });
 
@@ -252,11 +270,21 @@ namespace ProductService.Repositories
 
                 await connection.ExecuteAsync(sqlStringForChangeStockProuct, new { Id = product.ProductId, Quantity = product.Quantity});
                 result.Value.Add(new OutputOrderProduct { ProductId = product.ProductId, Quantity = product.Quantity, UnitPrice = productWithId.Price });
+                redisResult.Add(new RedisOutputOrderProduct
+                {
+                    ProductId = product.ProductId,
+                    Name = productWithId.Name,
+                    Description = productWithId.Description,
+                    Quantity = product.Quantity,
+                    Stock = productWithId.Stock - product.Quantity,
+                    UnitPrice = productWithId.Price
+                });
             }
 
             try
             {
                 await transaction.CommitAsync(cancellationToken);
+                await _redis.DecreaseStocks(redisResult);
             }
             catch
             {

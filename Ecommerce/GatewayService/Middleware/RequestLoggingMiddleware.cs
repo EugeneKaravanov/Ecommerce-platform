@@ -5,22 +5,24 @@ namespace GatewayService.Middleware
     public class RequestLoggingMiddleware
     {
         private readonly RequestDelegate _requestDelegate;
+        private readonly ILogger<RequestLoggingMiddleware> _logger;
 
-        public RequestLoggingMiddleware(RequestDelegate requestDelegate)
+        public RequestLoggingMiddleware(RequestDelegate requestDelegate, ILogger<RequestLoggingMiddleware> logger)
         {
             _requestDelegate = requestDelegate;
+            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            Console.WriteLine("Logfile запроса:");
-            Console.WriteLine($"Метод - {context.Request.Method}");
-            Console.WriteLine($"URL - {context.Request.GetDisplayUrl}");
+            _logger.LogInformation("Logfile запроса:");
+            _logger.LogInformation($"Метод - {context.Request.Method}");
+            _logger.LogInformation($"URL - {context.Request.GetDisplayUrl}");
 
             await _requestDelegate(context);
 
-            Console.WriteLine($"Статус ответа - {context.Response.StatusCode}");
-            Console.WriteLine($"Время ответа - {DateTime.Now}");
+            _logger.LogInformation($"Статус ответа - {context.Response.StatusCode}");
+            _logger.LogInformation($"Время ответа - {DateTime.Now}");
         }
     }
 }

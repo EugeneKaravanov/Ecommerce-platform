@@ -48,6 +48,50 @@ services:
     networks:
       - main-network
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+    networks:
+    - main-network
+  
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+    - main-network
+
+  product-service-redis:
+    image: redis:latest
+    volumes:
+      - product-service-redis-data:/data
+    restart: always
+    networks:
+      - main-network
+    command: ["redis-server", "--save", "300", "1", "--appendonly", "no"]
+
+  order-service-redis:
+    image: redis:latest
+    volumes:
+      - order-service-redis-data:/data
+    restart: always
+    networks:
+      - main-network
+    command: ["redis-server", "--save", "300", "1", "--appendonly", "no"]
+
   gateway-service:
     build:
         context: .
@@ -67,8 +111,14 @@ services:
         context: .
         dockerfile: ProductService/Dockerfile
     restart: always
+    depends_on:
+      - kafka
     environment:
         ConnectionStrings__DefaultConnection: Host=products-db;Port=5432;Database=Products-DB;Username=User;Password=password;
+        Kafka__OrderCreatedTopic: OrderCreatedTopic
+        Kafka__ProductsReservedTopic: ProductsReservedTopic
+        Kafka__Address: kafka:9092
+        Redis__Address: product-service-redis:6379
     networks:
       - main-network
  
@@ -77,11 +127,31 @@ services:
         context: .
         dockerfile: OrderService/Dockerfile
     restart: always
+    depends_on:
+      - kafka
     environment:
         ProductServiceAddress: http://product-service:8080
         ConnectionStrings__DefaultConnection: Host=orders-db;Port=5432;Database=Orders-DB;Username=User;Password=password;
         Shards__0__ConnectionString: Host=orders-shard1-db;Port=5432;Database=Orders-Shard1-DB;Username=User;Password=password;
         Shards__1__ConnectionString: Host=orders-shard2-db;Port=5432;Database=Orders-Shard2-DB;Username=User;Password=password;
+        Kafka__OrderCreatedTopic: OrderCreatedTopic
+        Kafka__ProductsReservedTopic: ProductsReservedTopic
+        Kafka__OrderFormedTopic: OrderFormedTopic
+        Kafka__Address: kafka:9092
+        Redis__Address: order-service-redis:6379
+    networks:
+      - main-network
+
+  informer-service:
+    build:
+        context: .
+        dockerfile: InformerService/Dockerfile
+    restart: always
+    depends_on:
+      - kafka
+    environment:
+        Kafka__OrderFormedTopic: OrderFormedTopic
+        Kafka__Address: kafka:9092
     networks:
       - main-network
 
@@ -90,6 +160,8 @@ volumes:
   orders-db-data:
   orders-shard1-db-data:
   orders-shard2-db-data:
+  order-service-redis-data:
+  product-service-redis-data:
 
 networks:
     main-network:
